@@ -1,0 +1,118 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lato&family=Roboto+Condensed&display=swap');
+
+body {
+    background-color: #ffffff;
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    width: 90%;
+    max-width: 1400px;
+    margin: 50px auto;
+    background-color: transparent;
+    border-radius: 50px;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+}
+
+.header {
+    text-align: right;
+    margin-bottom: 30px;
+}
+
+    .header h2 {
+        color: #333;
+        font-size: 2em;
+        font-weight: normal;
+        font-family: 'Montserrat', sans-serif;
+    }
+
+.logo {
+    display: flex;
+    justify-content: left;
+    margin-bottom: 30px;
+}
+
+    .logo img {
+        width: 100px;
+        height: auto;
+    }
+
+.card-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+}
+
+.card {
+    background-color: #fff;
+    border-radius: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    width: 200px; /* Ajustado para hacer los botones más pequeños */
+    height: 150px; /* Ajustado para hacer los botones más pequeños */
+    max-width: 100%;
+    text-align: center;
+    border: 1px solid #3f51b5;
+}
+
+.card-content {
+    padding: 10px; /* Ajustado para el nuevo tamaño */
+}
+
+.card h3 {
+    margin: 0 0 10px;
+    font-size: 1.2em; /* Ajustado para el nuevo tamaño */
+    color: #333;
+    font-weight: normal;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.card p {
+    margin: 0 0 10px; /* Ajustado para el nuevo tamaño */
+    font-size: 0.9em; /* Ajustado para el nuevo tamaño */
+    color: #666;
+}
+
+.card-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 10px 20px 20px;
+    background-color: transparent; /* Eliminar opacidad */
+    gap: 10px;
+}
+
+.btn {
+    flex: 1 1 60px; /* Reducido para hacer los botones más pequeños */
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s ease, background-color 0.3s ease;
+    justify-content: center;
+    padding: 5px; /* Ajuste del padding */
+    max-width: 100px; /* Reducido el ancho máximo */
+    background-color: transparent;
+}
+
+    .btn img {
+        margin-right: 5px;
+        width: 50px;
+        height: 50px;
+    }
+
+    .btn:hover {
+        color: #fff;
+        background-color: #5E58F8;
+    }
+
+@media (max-width: 300px) {
+    .card {
+        width: 90%;
+    }
+}

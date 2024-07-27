@@ -1,0 +1,123 @@
+@model ControlSoft.Models.LoginViewModel
+
+@{
+    ViewBag.Title = "Login";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title</title>
+    <!-- CSS Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <!-- CDN Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+
+    <!-- CSS Main -->
+    <link rel="stylesheet" href="~/Content/css/styles.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container vh-50">
+            <!-- Navbar -->
+            <nav class="navbar navbar-expand-lg navbar-light d-flex text-dark align-items-center">
+                <!-- Logo -->
+                <a class="navbar-brand" href="#">
+                    <img src="~/Content/images/logo.svg" alt="Logo" class="img-logo" style="width: 70px;">
+                </a>
+                <!-- Bot�n de colapso -->
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <!-- Men� -->
+                <div class="collapse navbar-collapse d-flex justify-content-center flex-grow-1" id="navbarNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Servicios</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Proyectos</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Planes</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Contacto</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="fas fa-user" style="color: #5e58f8;"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Contenido principal -->
+            <div class="row align-items-center justify-content-center h-100 mt-custom">
+                <div class="col-md-6">
+                    <!-- Imagen -->
+                    <img src="~/Content/images/img-1-sec-1.png" class="img-fluid" alt="Descripcion de la imagen">
+                </div>
+                <div class="col-md-6 text-dark pt-5">
+                    <!-- Titulo -->
+                    <div class="position-relative" style="top: -50px;">
+                        @if (ViewBag.Message != null)
+                        {
+                            <div class="alert alert-@ViewBag.AlertType alert-dismissible fade show" role="alert">
+                                @ViewBag.Message
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        }
+                        <form class="login-form p-4 rounded bg-white" action="@Url.Action("Login", "Home")" method="post" novalidate>
+
+                            @Html.AntiForgeryToken()
+                            <h1 class="text-capitalize text-center">
+                                <strong class="text-bold text-dark">Bienvenido(a)</strong>
+                            </h1>
+                            <div class="form-group position-relative">
+                                <label for="usuario">Usuario</label>
+                                <input type="text" class="form-control" id="usuario" name="Usuario" aria-describedby="usuarioHelp" placeholder="Usuario">
+                            </div>
+                            <div class="form-group position-relative">
+                                <label for="password">Contraseña</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="password" name="Contraseña" placeholder="Contraseña">
+                                    <div class="input-group-append" style="align-items: center;">
+                                        <span class="input-group-text toggle-password" style="height: 100%;">
+                                            <i class="far fa-eye-slash" id="togglePassword" style="cursor: pointer;"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group d-flex justify-content-end">
+                                <a href="#" class="text-decoration-none">Restablecer contraseña</a>
+                            </div>
+                            <div class="col-12 text-center">
+                                <button class="btn btn-custom-color w-100" type="submit">Ingresar</button>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <img src="~/Content/images/cut-header.svg" alt="">
+    </header>
+
+    
+
+    <!-- JavaScript Bootstrap Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/Content/js/scripts.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+
+</body>
+</html>
+

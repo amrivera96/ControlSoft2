@@ -1,0 +1,196 @@
+body {
+    background-color: #ffffff;
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    text-align: left; /* Asegura que el texto del cuerpo esté alineado a la izquierda */
+}
+
+.container {
+    width: 80%;
+    max-width: 800px;
+    margin: 50px auto;
+    background-color: #fff;
+    border: 1px solid #3f51b5;
+    border-radius: 20px;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    text-align: left; /* Asegura que el texto dentro del contenedor esté alineado a la izquierda */
+}
+
+.header {
+    text-align: right;
+    margin-bottom: 20px;
+}
+
+    .header h2 {
+        color: #333;
+        font-size: 1.5em;
+        font-weight: normal;
+        font-family: 'Montserrat', sans-serif;
+    }
+
+h1 {
+    color: #333;
+    font-size: 1.5em;
+    font-weight: normal;
+    font-family: 'Montserrat', sans-serif;
+    text-align: center;
+}
+
+.form-group {
+    margin-bottom: 10px;
+}
+
+    .form-group label {
+        display: block;
+        margin-bottom: 3px;
+        font-size: 0.9em;
+        text-align: left; /* Asegura que las etiquetas estén alineadas a la izquierda */
+    }
+
+    .form-group input,
+    .form-group textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        box-sizing: border-box;
+        color: #333;
+        font-family: 'Lato', sans-serif;
+        font-size: 0.9em;
+        text-align: left; /* Asegura que el texto de entrada esté alineado a la izquierda */
+    }
+
+    .form-group textarea {
+        height: 80px;
+        background-color: #EEEEEE;
+    }
+
+    .form-group .file-input {
+        display: none;
+    }
+
+    .form-group .file-label {
+        display: inline-block;
+        padding: 8px 16px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background-color: #f0f0f0;
+        cursor: pointer;
+    }
+
+        .form-group .file-label:hover {
+            background-color: #e0e0e0;
+        }
+
+        .form-group .file-label i {
+            margin-right: 3px;
+        }
+
+    .form-group .file-name {
+        display: inline-block;
+        margin-left: 8px;
+        font-style: italic;
+        color: #777;
+    }
+
+.buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+    .buttons button {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 16px;
+        font-size: 0.9em;
+        cursor: pointer;
+    }
+
+        .buttons button.primary {
+            background-color: #3f51b5;
+            color: #fff;
+        }
+
+        .buttons button.secondary {
+            background-color: #ddd;
+            color: #333;
+        }
+
+        .buttons button:hover {
+            opacity: 0.8;
+        }
+
+.logo {
+    display: flex;
+    justify-content: left;
+    margin-bottom: 20px;
+}
+
+    .logo img {
+        width: 80px;
+        height: auto;
+    }
+
+.dropbtn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.9em;
+    cursor: pointer;
+    background-color: #f0f0f0;
+    color: #333;
+    font-family: 'Lato', sans-serif;
+}
+
+    .dropbtn:focus {
+        background-color: #3f51b5;
+        color: #fff;
+    }
+
+    .dropbtn option {
+        padding: 8px;
+        background-color: #f9f9f9;
+        border-bottom: 1px solid #ccc;
+        color: #333;
+    }
+
+        .dropbtn option:hover {
+            background-color: #3f51b5;
+        }
+
+/* Estilos Adicionales */
+.table-container {
+    width: 100%;
+    max-width: 600px; /* Tamaño máximo para hacer la tabla más pequeña */
+    margin: 0 auto;
+}
+
+.table th, .table td {
+    padding: 0.5rem;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.header-title {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.btn-manage {
+    background-color: #5e58f8;
+    color: #fff;
+    border-color: #5e58f8;
+}
+
+    .btn-manage:hover,
+    .btn-manage:focus,
+    .btn-manage:active {
+        background-color: #fff;
+        color: #5e58f8;
+        border-color: #5e58f8;
+    }

@@ -1,0 +1,69 @@
+﻿/* Estilos Adicionales */
+.table-container {
+    width: 100%;
+    max-width: 1200px; /* Tamaño máximo aumentado */
+    margin: 0 auto;
+}
+
+.table th, .table td {
+    padding: 0.3rem; /* Reducir el padding para disminuir el espacio entre filas */
+    text-align: center;
+    vertical-align: middle; /* Centrar verticalmente el contenido */
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.header-title {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.btn-primary, .btn-deactivate, .btn-activate, .btn-edit, .btn-delete {
+    color: #fff;
+    border: none;
+    margin: 2px;
+    padding: 0.3rem 0.6rem; /* Ajustar padding para que los botones sean más pequeños */
+    font-size: 0.875rem; /* Ajustar tamaño de fuente para que los botones sean más compactos */
+}
+
+.btn-deactivate {
+    background-color: #9b59b6;
+}
+
+.btn-activate {
+    background-color: #3498db;
+}
+
+.btn-edit {
+    background-color: #f1c40f;
+}
+
+.btn-delete {
+    background-color: #e74c3c;
+}
+
+.btn-primary {
+    background-color: #5e58f8;
+}
+
+    .btn-primary:hover, .btn-deactivate:hover, .btn-activate:hover, .btn-edit:hover, .btn-delete:hover {
+        opacity: 0.8;
+    }
+
+    .btn-primary:focus, .btn-deactivate:focus, .btn-activate:focus, .btn-edit:focus, .btn-delete:focus {
+        opacity: 0.8;
+    }
+
+.input-group .form-control, .input-group .btn {
+    border-radius: 0;
+}
+
+.input-group .form-control {
+    border-right: none;
+}
+
+.input-group .btn {
+    border-left: none;
+}
