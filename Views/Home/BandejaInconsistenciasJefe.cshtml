@@ -64,8 +64,8 @@
                             <div class="alert @alertClass">@TempData["Mensaje"]</div>
                         }
 
-                        <div class="input-group mb-3">
-                            <input type="text" class="form-control" id="searchInput" onkeyup="filterTable()" placeholder="Buscar por nombre del empleado">
+                        <div class="input-group mb-3" style="max-width: 300px;">
+                            <input type="date" class="form-control" id="filterDate" onchange="filterTableByDate()" placeholder="Seleccione una fecha">
                         </div>
 
                         <div class="table-responsive table-container">
@@ -83,7 +83,7 @@
                                 <tbody>
                                     @foreach (var item in Model)
                                     {
-                                        <tr>
+                                        <tr data-date="@item.fechaInconsistencia.ToString("yyyy-MM-dd")">
                                             <td>@item.idInconsistencia</td>
                                             <td>@item.nombreTipoInconsistencia</td>
                                             <td>@item.fechaInconsistencia.ToString("dd/MM/yyyy")</td>
@@ -165,23 +165,21 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 
-    <!-- Script para filtrar la tabla -->
+    <!-- Script para filtrar la tabla por fecha -->
     <script>
-        function filterTable() {
+        function filterTableByDate() {
             var input, filter, table, tr, td, i, txtValue;
-            input = document.getElementById("searchInput");
-            filter = input.value.toLowerCase();
+            input = document.getElementById("filterDate");
+            filter = input.value;
             table = document.getElementById("inconsistenciasTable");
             tr = table.getElementsByTagName("tr");
 
             for (i = 1; i < tr.length; i++) {
-                td = tr[i].getElementsByTagName("td")[3]; // Columna del nombre del empleado
+                tr[i].style.display = "none"; // Oculta todas las filas inicialmente
+                td = tr[i].getAttribute("data-date"); // Obtiene el atributo data-date
                 if (td) {
-                    txtValue = td.textContent || td.innerText;
-                    if (txtValue.toLowerCase().indexOf(filter) > -1) {
-                        tr[i].style.display = "";
-                    } else {
-                        tr[i].style.display = "none";
+                    if (td === filter) {
+                        tr[i].style.display = ""; // Muestra la fila si coincide con la fecha seleccionada
                     }
                 }
             }

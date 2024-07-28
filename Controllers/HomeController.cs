@@ -159,8 +159,8 @@ namespace ControlSoft.Controllers
         // Acción para mostrar el historial de inconsistencias del empleado
         public ActionResult HistorialInconsistenciasEmp()
         {
-
             int idEmpleado = Convert.ToInt32(Session["idEmpleado"]); // Obtener el idEmpleado de la sesión
+
             List<RegistroInconsistencia> inconsistencias = new List<RegistroInconsistencia>();
 
             using (SqlConnection conn = new SqlConnection(connectionString))
@@ -259,8 +259,12 @@ namespace ControlSoft.Controllers
         }
 
 
+
+        // Bandeja Inconsistencias supervisor
         public ActionResult BandejaInconsistenciasJefe()
         {
+            int idEmpleado = Convert.ToInt32(Session["idEmpleado"]); // Obtener el idEmpleado de la sesión
+
             List<RegistroInconsistencia> inconsistencias = new List<RegistroInconsistencia>();
 
             using (SqlConnection conn = new SqlConnection(connectionString))
@@ -268,6 +272,7 @@ namespace ControlSoft.Controllers
                 using (SqlCommand cmd = new SqlCommand("sp_LeerTodosLosRegistrosGestiones", conn))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@idEmpleado", idEmpleado); // Pasar el idEmpleado como parámetro
                     conn.Open();
 
                     using (SqlDataReader reader = cmd.ExecuteReader())
@@ -314,6 +319,7 @@ namespace ControlSoft.Controllers
             return View(inconsistencias);
         }
 
+
         // Acción para gestionar las inconsistencias de los empleados
         [HttpPost]
         public ActionResult GestionInconsistenciasJefe(int idInconsistencia, bool estadoInconsistencia, string observacionGestion)
@@ -326,7 +332,6 @@ namespace ControlSoft.Controllers
                     cmd.Parameters.AddWithValue("@idInconsistencia", idInconsistencia);
                     cmd.Parameters.AddWithValue("@fechaGestion", DateTime.Now);
                     cmd.Parameters.AddWithValue("@estadoGestion", true); // Siempre será true para indicar que está gestionada
-                    cmd.Parameters.AddWithValue("@idJefe", 1); // Asume que el ID del jefe se obtiene de la identidad del usuario actual
                     cmd.Parameters.AddWithValue("@observacionGestion", observacionGestion);
                     cmd.Parameters.AddWithValue("@estadoInconsistencia", estadoInconsistencia); // Agregamos el estado de inconsistencia
 
@@ -506,7 +511,7 @@ namespace ControlSoft.Controllers
         // Acción para mostrar la vista de registro de actividades
         public ActionResult RegistrarActividadDiariaEmp()
         {
-            int idEmpleado = Session["idEmpleado"] != null ? (int)Session["idEmpleado"] : 301230123;
+            int idEmpleado = Convert.ToInt32(Session["idEmpleado"]); // Obtener el idEmpleado de la sesión
 
             var viewModel = new RegistrarActividadViewModel
             {
@@ -556,7 +561,9 @@ namespace ControlSoft.Controllers
         [HttpPost]
         public ActionResult CrearRegistroActividad(int idAct, TimeSpan horaInicio, TimeSpan horaFinal)
         {
-            int idEmp = Session["idEmpleado"] != null ? (int)Session["idEmpleado"] : 301230123;
+
+            int idEmp = Convert.ToInt32(Session["idEmpleado"]); // Obtener el idEmpleado de la sesión
+
             string mensaje = string.Empty;
 
             using (SqlConnection conn = new SqlConnection(connectionString))
@@ -633,7 +640,8 @@ namespace ControlSoft.Controllers
         //Mostrar bandeja de actividades del jefe
         public ActionResult BandejaActividadesJefe()
         {
-            int idJefe = Session["idEmpleado"] != null ? (int)Session["idEmpleado"] : 301240124;
+            int idJefe = Convert.ToInt32(Session["idEmpleado"]); // Obtener el idEmpleado de la sesión
+
             List<RegistroActividades> actividades = new List<RegistroActividades>();
 
             using (SqlConnection conn = new SqlConnection(connectionString))
@@ -679,7 +687,8 @@ namespace ControlSoft.Controllers
         [HttpPost]
         public ActionResult GestionarActividad(int idGesAct, string obserGest, bool estadoGesAct)
         {
-            int idJefe = Session["idEmpleado"] != null ? (int)Session["idEmpleado"] : 301240124; // Asegurando que el idJefe se toma de la sesión o asigna un valor por defecto
+            int idJefe = Convert.ToInt32(Session["idEmpleado"]); // Obtener el idEmpleado de la sesión
+                                                                 // 
             string mensaje = string.Empty;
 
             using (SqlConnection conn = new SqlConnection(connectionString))
@@ -710,11 +719,11 @@ namespace ControlSoft.Controllers
         }
 
 
-
-
-        //Pantalla para monitorear el rendimiento del empleado en vista jefe
+        // Pantalla para monitorear el rendimiento del empleado en vista jefe
         public ActionResult MonitoreoRendimientoJefe()
         {
+            int idJefe = Convert.ToInt32(Session["idEmpleado"]); // Obtener el idEmpleado de la sesión
+
             List<MonitoreoRendimiento> monitoreo = new List<MonitoreoRendimiento>();
 
             using (SqlConnection conn = new SqlConnection(connectionString))
@@ -722,6 +731,7 @@ namespace ControlSoft.Controllers
                 using (SqlCommand cmd = new SqlCommand("sp_LeerMonitoreoRendimientoJefe", conn))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@idJefe", idJefe); // Pasar el idJefe como parámetro
                     conn.Open();
 
                     using (SqlDataReader reader = cmd.ExecuteReader())
@@ -752,17 +762,118 @@ namespace ControlSoft.Controllers
         // Acción para mostrar el historial de horas extras
         public ActionResult HistorialHorasJefe()
         {
-            List<HistorialHoras> solicitudes = ObtenerHistorialHorasEmp();
+            int idJefe = Convert.ToInt32(Session["idEmpleado"]); // Obtener el idEmpleado de la sesión
+
+            List<HistorialHoras> solicitudes = new List<HistorialHoras>();
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                using (SqlCommand cmd = new SqlCommand("sp_LeerHistorialHorasEmp", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@idJefe", idJefe); // Pasar el idJefe como parámetro
+                    conn.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            HistorialHoras solicitud = new HistorialHoras
+                            {
+                                idSolicitud = Convert.ToInt32(reader["idSolicitud"]),
+                                Empleado = reader["Empleado"].ToString(),
+                                Actividad = reader["Actividad"].ToString(),
+                                cantidadHoras = Convert.ToDecimal(reader["cantidadHoras"]),
+                                Estado = reader["Estado"].ToString(),
+                                fechaSolicitud = Convert.ToDateTime(reader["fechaSolicitud"]),
+                                fechaSolicitada = Convert.ToDateTime(reader["fechaSolicitada"]),
+                                motivoSolicitud = reader["motivoSolicitud"].ToString()
+                            };
+
+                            solicitudes.Add(solicitud);
+                        }
+                    }
+                }
+            }
+
             ViewBag.Empleados = ObtenerEmpleados();
             ViewBag.Actividades = ObtenerActividades();
             return View(solicitudes);
+        }
+
+
+        //Metodo para obtener empleados
+        private List<Empleado> ObtenerEmpleados()
+        {
+            int idJefe = Convert.ToInt32(Session["idEmpleado"]); // Obtener el idEmpleado de la sesión
+
+            List<Empleado> empleados = new List<Empleado>();
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                using (SqlCommand cmd = new SqlCommand("ObtenerEmpleadosSesion", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@idJefe", idJefe);
+                    conn.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            Empleado empleado = new Empleado
+                            {
+                                idEmpleado = Convert.ToInt32(reader["idEmpleado"]),
+                                nombre = reader["nombre"].ToString(),
+                                apellidos = reader["apellidos"].ToString()
+                            };
+
+                            empleados.Add(empleado);
+                        }
+                    }
+                }
+            }
+
+            return empleados;
+        }
+
+
+        //Metodo para obtener actividades
+        private List<TiposActividades> ObtenerActividades()
+        {
+            List<TiposActividades> actividades = new List<TiposActividades>();
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                using (SqlCommand cmd = new SqlCommand("SELECT idAct, nombreAct FROM TiposActividades", conn))
+                {
+                    cmd.CommandType = CommandType.Text;
+                    conn.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            TiposActividades actividad = new TiposActividades
+                            {
+                                idAct = Convert.ToInt32(reader["idAct"]),
+                                nombreAct = reader["nombreAct"].ToString()
+                            };
+
+                            actividades.Add(actividad);
+                        }
+                    }
+                }
+            }
+
+            return actividades;
         }
 
         // Acción para crear una nueva solicitud de horas extra
         [HttpPost]
         public ActionResult CrearSolicitudHoras(int idEmpleado, int idAct, decimal cantidadHoras, DateTime fechaSolicitada, string motivoSolicitud)
         {
-            int idJefe = 1; // Asume que el ID del jefe es 1 para simplificar
+            int idJefe = Convert.ToInt32(Session["idEmpleado"]); // Obtener el idEmpleado de la sesión
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
@@ -785,10 +896,48 @@ namespace ControlSoft.Controllers
             return RedirectToAction("HistorialHorasJefe");
         }
 
+
+        private List<HistorialHoras> ObtenerHistorialHorasEmpsolicitadas()
+        {
+            List<HistorialHoras> solicitudes = new List<HistorialHoras>();
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                using (SqlCommand cmd = new SqlCommand("sp_LeerHistorialHorasEmp", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    conn.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            HistorialHoras solicitud = new HistorialHoras
+                            {
+                                idSolicitud = Convert.ToInt32(reader["idSolicitud"]),
+                                Empleado = reader["Empleado"].ToString(),
+                                Actividad = reader["Actividad"].ToString(),
+                                cantidadHoras = Convert.ToDecimal(reader["cantidadHoras"]),
+                                Estado = reader["Estado"].ToString(),
+                                fechaSolicitada = Convert.ToDateTime(reader["fechaSolicitada"]),
+                                fechaSolicitud = Convert.ToDateTime(reader["fechaSolicitud"]),
+                                motivoSolicitud = reader["motivoSolicitud"].ToString()
+                            };
+
+                            solicitudes.Add(solicitud);
+                        }
+                    }
+                }
+            }
+
+            return solicitudes;
+        }
+
+
         // Acción para mostrar el historial de horas extras
         public ActionResult HistorialHorasEmp()
         {
-            List<HistorialHoras> solicitudes = ObtenerHistorialHorasEmp();
+            List<HistorialHoras> solicitudes = ObtenerHistorialHorasEmpsolicitadas();
             ViewBag.Empleados = ObtenerEmpleados();
             ViewBag.Actividades = ObtenerActividades();
             return View(solicitudes);
@@ -850,104 +999,7 @@ namespace ControlSoft.Controllers
             return RedirectToAction("HistorialHorasEmp");
         }
 
-        private List<HistorialHoras> ObtenerHistorialHorasEmp()
-        {
-            List<HistorialHoras> solicitudes = new List<HistorialHoras>();
-
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                using (SqlCommand cmd = new SqlCommand("sp_LeerHistorialHorasEmp", conn))
-                {
-                    cmd.CommandType = CommandType.StoredProcedure;
-                    conn.Open();
-
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            HistorialHoras solicitud = new HistorialHoras
-                            {
-                                idSolicitud = Convert.ToInt32(reader["idSolicitud"]),
-                                Empleado = reader["Empleado"].ToString(),
-                                Actividad = reader["Actividad"].ToString(),
-                                cantidadHoras = Convert.ToDecimal(reader["cantidadHoras"]),
-                                Estado = reader["Estado"].ToString(),
-                                fechaSolicitada = Convert.ToDateTime(reader["fechaSolicitada"]),
-                                fechaSolicitud = Convert.ToDateTime(reader["fechaSolicitud"]),
-                                motivoSolicitud = reader["motivoSolicitud"].ToString()
-                            };
-
-                            solicitudes.Add(solicitud);
-                        }
-                    }
-                }
-            }
-
-            return solicitudes;
-        }
-
-        //Metodo para obtener empleados
-        private List<Empleado> ObtenerEmpleados()
-        {
-            List<Empleado> empleados = new List<Empleado>();
-
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                using (SqlCommand cmd = new SqlCommand("SELECT idEmpleado, nombre, apellidos FROM Empleado", conn))
-                {
-                    cmd.CommandType = CommandType.Text;
-                    conn.Open();
-
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            Empleado empleado = new Empleado
-                            {
-                                idEmpleado = Convert.ToInt32(reader["idEmpleado"]),
-                                nombre = reader["nombre"].ToString(),
-                                apellidos = reader["apellidos"].ToString()
-                            };
-
-                            empleados.Add(empleado);
-                        }
-                    }
-                }
-            }
-
-            return empleados;
-        }
-
-        //Metodo para obtener actividades
-        private List<TiposActividades> ObtenerActividades()
-        {
-            List<TiposActividades> actividades = new List<TiposActividades>();
-
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                using (SqlCommand cmd = new SqlCommand("SELECT idAct, nombreAct FROM TiposActividades", conn))
-                {
-                    cmd.CommandType = CommandType.Text;
-                    conn.Open();
-
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            TiposActividades actividad = new TiposActividades
-                            {
-                                idAct = Convert.ToInt32(reader["idAct"]),
-                                nombreAct = reader["nombreAct"].ToString()
-                            };
-
-                            actividades.Add(actividad);
-                        }
-                    }
-                }
-            }
-
-            return actividades;
-        }
+        
 
         public ActionResult shared()
         {
@@ -1130,7 +1182,6 @@ namespace ControlSoft.Controllers
 
 
         //Metodo para Login Empleado
-
         [HttpPost]
         public ActionResult Login(LoginViewModel model)
         {
