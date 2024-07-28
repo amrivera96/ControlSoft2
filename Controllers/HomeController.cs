@@ -36,18 +36,6 @@ namespace ControlSoft.Controllers
             }
         }
 
-        // Acción para simular el inicio de sesión
-        public ActionResult Login2()
-        {
-            // Simular el inicio de sesión y establecer el ID del empleado en la sesión
-            int idEmpleado = 301230123; // Supongamos que es 1
-            Session["idEmpleado"] = idEmpleado;
-
-            // Redirigir a la página de DashboardInicioEmp
-            return RedirectToAction("DashboardInicioEmp");
-        }
-
-
         // Acción para mostrar la vista de tipos de inconsistencias
         public ActionResult TiposInconsistencia()
         {
@@ -171,11 +159,6 @@ namespace ControlSoft.Controllers
         // Acción para mostrar el historial de inconsistencias del empleado
         public ActionResult HistorialInconsistenciasEmp()
         {
-            // Asumimos que el idEmpleado es 1 si no está en la sesión
-            if (Session["idEmpleado"] == null)
-            {
-                Session["idEmpleado"] = 301230123;
-            }
 
             int idEmpleado = Convert.ToInt32(Session["idEmpleado"]); // Obtener el idEmpleado de la sesión
             List<RegistroInconsistencia> inconsistencias = new List<RegistroInconsistencia>();
@@ -602,9 +585,6 @@ namespace ControlSoft.Controllers
             TempData["Mensaje"] = mensaje; // Usar TempData para pasar el mensaje a la vista
             return RedirectToAction("RegistrarActividadDiariaEmp");
         }
-
-
-
 
 
         //Metodo para obtener el registro de las actividades
@@ -1145,11 +1125,11 @@ namespace ControlSoft.Controllers
             return View("registroEmpleado", model);
         }
 
+        //Accion para mostrar pantalla de Login Empleado
 
-        public ActionResult Login()
-        {
-            return View();
-        }
+
+
+        //Metodo para Login Empleado
 
         [HttpPost]
         public ActionResult Login(LoginViewModel model)
@@ -1202,6 +1182,9 @@ namespace ControlSoft.Controllers
 
                             if (estadoCre)
                             {
+                                // Guardar el idEmpleado en la sesión
+                                Session["idEmpleado"] = model.Usuario;
+
                                 // Redirigir a la vista correspondiente basado en el rol
                                 if (rol == "EMPLEADO")
                                 {
@@ -1241,6 +1224,11 @@ namespace ControlSoft.Controllers
             return View(model);
         }
 
+
+        public ActionResult Login()
+        {
+            return View();
+        }
 
         public ActionResult horarios()
         {
@@ -1301,9 +1289,6 @@ namespace ControlSoft.Controllers
         {
             return View();
         }
-
-
-
 
         public ActionResult turnos()
         {
