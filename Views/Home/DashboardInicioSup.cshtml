@@ -72,7 +72,7 @@
                     <div class="card-container">
                         <div class="card">
                             <div class="card-buttons">
-                                <a href="#" class="btn">
+                                <a href="@Url.Action("perfilEmpleado", "Home")" class="btn">
                                     <img src="~/Content/iconos/usuario.png" alt="Icono 1">
                                 </a>
                             </div>
@@ -83,7 +83,7 @@
 
                         <div class="card">
                             <div class="card-buttons">
-                                <a href="#" class="btn">
+                                <a href="@Url.Action("horarios", "Home")" class="btn">
                                     <img src="~/Content/iconos/horarios.png" alt="Icono 2">
                                 </a>
                             </div>
@@ -128,13 +128,15 @@
                         <div class="card">
                             <div class="card-buttons">
                                 <a href="#" class="btn">
-                                    <img src="~/Content/iconos/feriados.png" alt="Icono 6">
+                                    <img src="~/Content/iconos/solicitudes.png" alt="Icono 13">
                                 </a>
                             </div>
                             <div class="card-content">
-                                <h3>Feriados</h3>
+                                <h3>Solicitudes</h3>
                             </div>
                         </div>
+
+
 
                         <div class="card">
                             <div class="card-buttons">
@@ -158,16 +160,6 @@
                             </div>
                         </div>
 
-                        <div class="card">
-                            <div class="card-buttons">
-                                <a href="#" class="btn">
-                                    <img src="~/Content/iconos/roles.png" alt="Icono 9">
-                                </a>
-                            </div>
-                            <div class="card-content">
-                                <h3>Roles</h3>
-                            </div>
-                        </div>
 
                         <div class="card">
                             <div class="card-buttons">
@@ -182,7 +174,7 @@
 
                         <div class="card">
                             <div class="card-buttons">
-                                <a href="#" class="btn">
+                                <a href="@Url.Action("registroEmpleado", "Home")" class="btn">
                                     <img src="~/Content/iconos/agregarEmp.png" alt="Icono 11">
                                 </a>
                             </div>
@@ -193,7 +185,21 @@
 
                         <div class="card">
                             <div class="card-buttons">
-                                <a href="#" class="btn">
+                                <a href="@Url.Action("registrarDepartamento", "Home")" class="btn">
+                                    <img src="~/Content/iconos/roles.png" alt="Icono 9">
+                                </a>
+                            </div>
+                            <div class="card-content">
+                                <h3>Departamentos</h3>
+                            </div>
+                        </div>
+
+
+
+                        <div class="card">
+                            <div class="card-buttons">
+                                <a href="@Url.Action("registrarPuesto", "Home")" class="btn">
+
                                     <img src="~/Content/iconos/puestos.png" alt="Icono 12">
                                 </a>
                             </div>
@@ -202,25 +208,26 @@
                             </div>
                         </div>
 
+
                         <div class="card">
                             <div class="card-buttons">
-                                <a href="#" class="btn">
-                                    <img src="~/Content/iconos/solicitudes.png" alt="Icono 13">
+                                <a href="@Url.Action("registrarTurnoTrabajo", "Home")" class="btn">
+                                    <img src="~/Content/iconos/feriados.png" alt="Icono 6">
                                 </a>
                             </div>
                             <div class="card-content">
-                                <h3>Solicitudes</h3>
+                                <h3>Turnos</h3>
                             </div>
                         </div>
 
                         <div class="card">
                             <div class="card-buttons">
-                                <a href="#" class="btn">
+                                <a href="@Url.Action("gestionarEmpleados", "Home")" class="btn">
                                     <img src="~/Content/iconos/indicadores.png" alt="Icono 14">
                                 </a>
                             </div>
                             <div class="card-content">
-                                <h3>Indicadores</h3>
+                                <h3>Gestion Empleados</h3>
                             </div>
                         </div>
                     </div>

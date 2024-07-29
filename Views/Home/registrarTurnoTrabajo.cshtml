@@ -1,7 +1,7 @@
-@model ControlSoft.Models.RegistroEmpleadoViewModel
+@model ControlSoft.Models.TurnoViewModel
 
 @{
-    ViewBag.Title = "turnos";
+    ViewBag.Title = "registrarTurnoTrabajo";
     Layout = null;
 
 
@@ -83,7 +83,7 @@
 
 
 
-                        <form class="login-form needs-validation rounded p-4  bg-white custom-border" action="@Url.Action("registroEmpleado", "Home")" method="post" novalidate>
+                        <form class="login-form needs-validation rounded p-4  bg-white"  style="border: 1px groove #5E58F8;" action="@Url.Action("registrarTurnoTrabajo", "Home")" method="post" novalidate>
                             @Html.AntiForgeryToken()
 
                             <h1 class="text-capitalize text-center">
@@ -92,7 +92,7 @@
                             <div class="row g-3">
                                 <div class="col-md-12">
                                     <label for="nombreTurno" class="form-label">Nombre Turno</label>
-                                    <input type="text" class="form-control bg-light rounded" id="nombreTurno" name="nombreTurno" placeholder="Nombre Turno" required>
+                                    <input type="text" class="form-control bg-light rounded" id="nombreTurno" name="NombreTurno" placeholder="Nombre Turno" required>
                                     <div class="invalid-feedback">
                                         Por favor, ingrese el nombre Turno.
                                     </div>
@@ -103,7 +103,7 @@
 
                                 <div class="col-md-6">
                                     <label for="horaInicio" class="form-label">Entrada</label>
-                                    <input type="time" class="form-control bg-light rounded" id="horaInicio" name="horaInicio" placeholder="00:00" required>
+                                    <input type="time" class="form-control bg-light rounded" id="horaInicio" name="HoraInicio" placeholder="00:00" required>
                                     <div class="invalid-feedback">
                                         Por favor, ingrese una hora valida.
                                     </div>
@@ -111,7 +111,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label for="horaFin" class="form-label">Salida</label>
-                                    <input type="time" class="form-control bg-light rounded" id="horaFin" name="horaFin" placeholder="00:00" required>
+                                    <input type="time" class="form-control bg-light rounded" id="horaFin" name="HoraFin" placeholder="00:00" required>
                                     <div class="invalid-feedback">
                                         Por favor, ingrese una hora valida.
                                     </div>
@@ -120,7 +120,7 @@
 
                                 <div class="col-md-12">
                                     <label for="validationTooltip01" class="form-label">Estado Turno</label>
-                                    <select class="form-select w-100 bg-light rounded" id="validationTooltip01" name="estadoTurno" required>
+                                    <select class="form-select w-100 bg-light rounded" id="validationTooltip01" name="EstadoTurno" required>
                                         <option selected disabled value="">Asignar Estado...</option>
                                         <option value="0">Inactivo</option>
                                         <option value="1">Activo</option>

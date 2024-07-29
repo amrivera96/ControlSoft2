@@ -135,11 +135,16 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Models\departamentosModels.cs" />
+    <Compile Include="Models\empleadoPuesto.cs" />
+    <Compile Include="Models\gesEmpleado.cs" />
     <Compile Include="Models\horarioModel.cs" />
     <Compile Include="Models\loginGeneral.cs" />
+    <Compile Include="Models\perfilEmp.cs" />
     <Compile Include="Models\puestosModels.cs" />
     <Compile Include="Models\RegistroEmpleados.cs" />
     <Compile Include="Models\RegistroInconsistencia.cs" />
+    <Compile Include="Models\turnoModel.cs" />
+    <Compile Include="Models\updateContraseña.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -204,7 +209,6 @@
     <Content Include="Scripts\modernizr-2.8.3.js" />
     <Content Include="Views\Web.config" />
     <Content Include="Views\_ViewStart.cshtml" />
-    <Content Include="Views\Shared\Error.cshtml" />
     <Content Include="Views\Home\DashboardInicioEmp.cshtml" />
     <Content Include="Views\Home\DashboardInicioJef.cshtml" />
     <Content Include="Views\Home\HistorialInconsistenciasEmp.cshtml" />
@@ -226,8 +230,11 @@
     <Content Include="Views\Home\registrarDepartamento.cshtml" />
     <Content Include="Views\Home\registrarPuesto.cshtml" />
     <Content Include="Views\Home\registroEmpleado.cshtml" />
-    <Content Include="Views\Home\turnos.cshtml" />
     <Content Include="Views\Home\DashboardInicioSup.cshtml" />
+    <Content Include="Views\Home\filtraEmpleadoPuesto.cshtml" />
+    <Content Include="Views\Home\registrarTurnoTrabajo.cshtml" />
+    <Content Include="Views\Home\perfilEmpleado.cshtml" />
+    <Content Include="Views\Home\gestionarEmpleados.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>

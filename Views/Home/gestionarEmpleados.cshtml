@@ -1,0 +1,505 @@
+@using ControlSoft.Models
+@model List<ControlSoft.Models.GEmpleadoViewModel>
+
+
+
+
+@{
+    ViewBag.Title = "gestionarEmpleados";
+    Layout = null;
+}
+
+@{
+    var message = TempData["Message"] as string;
+    var messageType = TempData["MessageType"] as string;
+}
+
+
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="ViewBag.TitleUTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title</title>
+    <!-- CSS Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <!-- CDN Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <!-- CSS Main -->
+    <link rel="stylesheet" href="~/Content/css/styles.css">
+    <!-- Letra Montserrat -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400&family=Montserrat:wght@300;400;600;700&family=Roboto:wght@300;400&display=swap">
+</head>
+<body>
+    <header class="header">
+        <div class="container vh-50">
+            <!-- Navbar -->
+            <nav class="navbar navbar-expand-lg navbar-light text-dark align-items-center">
+                <!-- Logo -->
+                <a class="navbar-brand" href="#">
+                    <img src="~/Content/images/logo.svg" alt="Logo" class="img-logo" style="width: 50px;">
+                </a>
+                <!-- BotÃ³n de colapso -->
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <!-- MenÃº -->
+                <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Servicios</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Proyectos</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Planes</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Contacto</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="fas fa-user" style="color: #5e58f8;"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+            <!-- Contenido principal -->
+            <div class="row align-items-center justify-content-center h-100 mt-custom">
+                <div class="col-md-6">
+                    <!-- Imagen -->
+                    <img src="~/Content/images/[removal.ai]_898d7477-a899-4639-8e9e-a35e3f9bdf15-imga.png" class="img-fluid" alt="DescripciÃ³n de la imagen" style="max-width: 60%; height: auto; margin-top: 70px;">
+                </div>
+                <div class="col-md-6 text-dark pt-5 ">
+                    @if (!string.IsNullOrEmpty(message))
+                    {
+                        <div class="alert alert-@messageType alert-dismissible fade show" role="alert">
+                            @message
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+                    <div class="position-relative mt-5 " style="width:165%; left: -240px">
+                        <form class="login-form needs-validation rounded p-4 rounded bg-white"  style="border: 1px groove #5E58F8;" novalidate>
+                            <h2 class="text-center">GESTION EMPLEADOS</h2>
+
+                            <div class="d-flex justify-content-between">
+                                <div class="input-group mb-2">
+                                    <input id="searchInput" type="text" class="form-control" placeholder="Buscar Empleado">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="filterTable()">Buscar</button>
+                                </div>
+                            </div>
+                            <div class="table-responsive table-container text-center">
+                                <div style="max-height: 300px; overflow-y: auto; min-height: 300px; ">
+                                    @if (Model != null && Model.Any())
+                                    {
+                                        <table id="tablaUsuarios" class="table table-bordered" style="width: 100%;">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>ID Empleado</th>
+                                                    <th>Nombre </th>
+                                                    <th>Apellidos </th>
+                                                    <th>Correo </th>
+                                                    <th>Telefono</th>
+                                                    <th>Puesto</th>
+                                                    <th>Rol</th>
+                                                    <th>Fecha Ingreso</th>
+                                                    <th>Accion</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var empleado in Model)
+                                                {
+                                                    <tr>
+                                                        <td>@empleado.idEmpleado</td>
+                                                        <td>@empleado.NombreCompleto</td>
+                                                        <td>@empleado.ApellidosCompletos</td>
+                                                        <td>@empleado.CorreoElectronico</td>
+                                                        <td>@empleado.Telefono</td>
+                                                        <td>@empleado.Puesto</td>
+                                                        <td>@empleado.Rol</td>
+                                                        <td>@empleado.FechaIngreso.ToString("dd/MM/yyyy")</td>
+                                                        <td>
+                                                            <button type="button" class="btn btn-custom-color btn-sm d-inline-block me-1 gestionar-btn"
+                                                                    data-id="@empleado.idEmpleado"
+                                                                    data-nombre="@empleado.NombreCompleto"
+                                                                    data-apellidos="@empleado.ApellidosCompletos"
+                                                                    data-correo="@empleado.CorreoElectronico"
+                                                                    data-telefono="@empleado.Telefono"
+                                                                    data-puesto="@empleado.Puesto"
+                                                                    data-rol="@empleado.Rol"
+                                                                    data-fecha-ingreso="@empleado.FechaIngreso.ToString("yyyy-MM-dd")"
+                                                                    data-bs-toggle="modal" data-bs-target="#modalGestionar">
+                                                                Gestionar
+                                                            </button>
+                                                            <button type="button" class="btn btn-danger btn-sm d-inline-block me-1" data-bs-toggle="modal" data-bs-target="#modalModificar">
+                                                                Desactivar
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    }
+                                    else
+                                    {
+                                        <p>No se encontraron empleados.</p>
+                                    }
+                                </div>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <img src="~/Content/images/cut-header.svg" alt="">
+
+    </header>
+
+    <!-- Modal para Gestionar Datos -->
+    <div class="modal fade" id="modalGestionar" tabindex="-1" aria-labelledby="modalGestionarLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header text-center">
+                    <h5 class="modal-title" id="modalGestionarLabel">Gestionar Datos de Empleado</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Formulario en el Modal -->
+                    <form class="needs-validation" method="post" action="@Url.Action("ActualizarEmpleado", "Home")">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="cedula" class="form-label">ID Empleado</label>
+                                <input type="text" class="form-control bg-light rounded" id="cedula" name="idEmpleado" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="nombreCompleto" class="form-label">Nombre Completo</label>
+                                <input type="text" class="form-control bg-light rounded" id="nombreCompleto" name="NombreCompleto" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="apellidos" class="form-label">Apellidos</label>
+                                <input type="text" class="form-control bg-light rounded" id="apellidos" name="ApellidosCompletos" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="correo" class="form-label">Correo Electronico</label>
+                                <input type="email" class="form-control bg-light rounded" id="correo" name="CorreoElectronico" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="telefono" class="form-label">Telefono</label>
+                                <input type="tel" class="form-control bg-light rounded" id="telefono" name="Telefono" required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="puesto" class="form-label">Puesto Actual</label>
+                                <select class="form-select bg-light rounded" id="puesto" name="Puesto" required>
+                                    @if (ViewBag.Puestos != null)
+                                    {
+                                        foreach (var puesto in ViewBag.Puestos as List<Puesto>)
+                                        {
+                                            <option value="@puesto.nombrePuesto">@puesto.nombrePuesto</option>
+                                        }
+                                    }
+                                </select>
+                                <div class="invalid-feedback">
+                                    Por favor, ingrese un puesto.
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="rol" class="form-label">Rol Actual</label>
+
+                                <select class="form-select bg-light rounded" id="rol" name="Rol" required>
+                                    @if (ViewBag.Roles != null)
+                                    {
+                                        foreach (var rol in ViewBag.Roles as List<Rol>)
+                                        {
+                                            <option value="@rol.nombreRol">@rol.nombreRol</option>
+                                        }
+                                    }
+                                </select>
+                                <div class="invalid-feedback">
+                                    Por favor, ingrese un puesto.
+                                </div>
+
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="fechaIngreso" class="form-label">Fecha de Ingreso</label>
+                                <input type="date" class="form-control bg-light rounded" id="fechaIngreso" name="FechaIngreso" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <div class="col-12 text-center">
+                                <button type="submit" class="btn btn-custom-color w-50">Actualizar</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Modal para Modificar Datos -->
+    <!-- Modal para Modificar Datos -->
+    <div class="modal fade" id="modalModificar" tabindex="-1" aria-labelledby="modalModificarLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header text-center">
+                    <h5 class="modal-title" style="color: #5E58F8; font-size: 24px; font-weight: bold;" id="modalModificarLabel">Gestionar Horario De Empleado</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Formulario en el Modal -->
+                    <div class="row g-3">
+                        <div class="table-responsive table-container text-center">
+                            <table class="table table-bordered" style="width: 100%;">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ID HORARIO</th>
+                                        <th>EMPLEADO</th>
+                                        <th>FECHA</th>
+                                        <th>DIA</th>
+                                        <th>TURNO</th>
+                                        <th>Acciï¿½n</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>1</td>
+                                        <td>301230123</td>
+                                        <td>30-07-2024</td>
+                                        <td>MARTES</td>
+                                        <td>TURNO</td>
+                                        <td>
+                                            <button type="button" class="btn btn-success btn-sm d-inline-block me-1">
+                                                Gestionar
+                                            </button>
+
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <!--<div class="d-flex justify-content-between">
+                              <button class="btn btn-custom-color2">Anterior</button>
+                              <button class="btn btn-custom-color">Siguiente</button>
+                            </div>--->
+                        </div>
+                        <div class="col-md-6">
+                            <label for="cedula" class="form-label">CÃ©dula</label>
+                            <input type="text" class="form-control bg-light rounded" id="cedula" placeholder="CÃ©dula" required>
+                            <div class="invalid-feedback">
+                                Por favor, ingrese su cÃ©dula.
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="nombreCompleto" class="form-label">Nombre Completo</label>
+                            <input type="text" class="form-control bg-light rounded" id="nombreCompleto" placeholder="Nombre Completo" required>
+                            <div class="invalid-feedback">
+                                Por favor, ingrese su nombre completo.
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="fechaIngreso" class="form-label">Fecha de Ingreso</label>
+                            <input type="date" class="form-control bg-light rounded" id="fechaIngreso" required>
+                            <div class="invalid-feedback">
+                                Por favor, ingrese su fecha de ingreso.
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="turnos" class="form-label">Turnos de Trabajo</label>
+                            <select class="form-select w-100 bg-light rounded" id="turnos" required>
+                                <option selected disabled value="">Seleccionar Turno...</option>
+                                <option value="TURNO 1">TURNO 1</option>
+                                <!-- Agregar opciones aquï¿½ -->
+                            </select>
+                            <div class="invalid-tooltip">
+                                Seleccione un turno.
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="col-12 text-center">
+                        <button class="btn btn-custom-color w-50" type="submit">Actualizar Horario</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Scripts Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Scripts Personalizados -->
+    <script src="~/Content/js/scripts.js"></script>
+    <script>
+        document.getElementById('addButton').addEventListener('click', function () {
+            // Obtener valores de los campos
+            const turno = document.getElementById('turnos').value.trim();
+            const fechaIngreso = document.getElementById('fechaIngreso').value.trim();
+
+            // Verificar que todos los campos tengan valor
+            if (turno && fechaIngreso) {
+                // Crear la tarjeta
+                const card = document.createElement('div');
+                card.className = 'card mb-3 me-3';
+                card.style.width = '200px';  // Ajusta el ancho de las tarjetas
+                card.style.marginRight = '10px';
+                card.style.position = 'relative';  // Para posicionar el botÃ³n de eliminar
+                card.innerHTML = `
+                                                                                      <div class="card-body">
+                                                                                        <button type="button" class="btn-close position-absolute top-0 end-0 m-2" aria-label="Close"></button>
+                                                                                        <h5 class="card-title">Turno: ${turno}</h5>
+                                                                                        <p class="card-text"><strong>Fecha de Ingreso:</strong> ${fechaIngreso}</p>
+
+                                                                                      </div>
+                                                                                    `;
+
+                // Agregar la tarjeta al contenedor
+                document.getElementById('cardsContainer').appendChild(card);
+
+                // Agregar funcionalidad al botÃ³n de eliminar
+                card.querySelector('.btn-close').addEventListener('click', function () {
+                    card.remove();
+                });
+
+                // Limpiar los campos despuÃ©s de agregar la tarjeta
+                document.getElementById('turnos').value = '';
+                document.getElementById('fechaIngreso').value = '';
+            }
+        });
+    </script>
+
+    <script>
+        function filterTable() {
+            var input = document.getElementById("searchInput");
+            var filter = input.value.toLowerCase();
+            var table = document.getElementById("tablaUsuarios");
+            var rows = table.getElementsByTagName("tr");
+
+            for (var i = 1; i < rows.length; i++) {
+                var cells = rows[i].getElementsByTagName("td");
+                var match = false;
+                for (var j = 0; j < cells.length; j++) {
+                    var cell = cells[j];
+                    if (cell) {
+                        var cellText = cell.textContent || cell.innerText;
+                        if (cellText.toLowerCase().indexOf(filter) > -1) {
+                            match = true;
+                            break;
+                        }
+                    }
+                }
+                rows[i].style.display = match ? "" : "none";
+            }
+        }
+
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            var gestionarButtons = document.querySelectorAll('.gestionar-btn');
+
+            // Verificar si se encontraron botones
+            if (gestionarButtons.length === 0) {
+                console.log("No se encontraron botones con la clase 'gestionar-btn'.");
+                return;
+            }
+
+            gestionarButtons.forEach(button => {
+                button.addEventListener('click', function () {
+                    var idEmpleado = this.getAttribute('data-id');
+                    var nombreCompleto = this.getAttribute('data-nombre');
+                    var apellidosCompletos = this.getAttribute('data-apellidos');
+                    var correoElectronico = this.getAttribute('data-correo');
+                    var telefono = this.getAttribute('data-telefono');
+                    var puestoNombre = this.getAttribute('data-puesto');
+                    var rolNombre = this.getAttribute('data-rol');
+                    var fechaIngreso = this.getAttribute('data-fecha-ingreso');
+
+                    // Mostrar en consola los valores obtenidos
+                    console.log("ID Empleado: " + idEmpleado);
+                    console.log("Nombre Completo: " + nombreCompleto);
+                    console.log("Apellidos Completos: " + apellidosCompletos);
+                    console.log("Correo Electrónico: " + correoElectronico);
+                    console.log("Teléfono: " + telefono);
+                    console.log("Puesto: " + puestoNombre);
+                    console.log("Rol: " + rolNombre);
+                    console.log("Fecha de Ingreso: " + fechaIngreso);
+
+                    document.getElementById('cedula').value = idEmpleado;
+                    document.getElementById('nombreCompleto').value = nombreCompleto;
+                    document.getElementById('apellidos').value = apellidosCompletos;
+                    document.getElementById('correo').value = correoElectronico;
+                    document.getElementById('telefono').value = telefono;
+                    document.getElementById('fechaIngreso').value = fechaIngreso;
+
+                    // Seleccionar la opción correcta en el dropdown de 'puesto'
+                    var puestoDropdown = document.getElementById('puesto');
+                    for (var i = 0; i < puestoDropdown.options.length; i++) {
+                        if (puestoDropdown.options[i].text === puestoNombre) {
+                            puestoDropdown.selectedIndex = i;
+                            break;
+                        }
+                    }
+
+                    // Seleccionar la opción correcta en el dropdown de 'rol'
+                    var rolDropdown = document.getElementById('rol');
+                    for (var i = 0; i < rolDropdown.options.length; i++) {
+                        if (rolDropdown.options[i].text === rolNombre) {
+                            rolDropdown.selectedIndex = i;
+                            break;
+                        }
+                    }
+
+                    // Mostrar en consola el estado final del formulario
+                    console.log("Formulario actualizado:");
+                    console.log("ID Empleado (input): " + document.getElementById('cedula').value);
+                    console.log("Nombre Completo (input): " + document.getElementById('nombreCompleto').value);
+                    console.log("Apellidos (input): " + document.getElementById('apellidos').value);
+                    console.log("Correo (input): " + document.getElementById('correo').value);
+                    console.log("Teléfono (input): " + document.getElementById('telefono').value);
+                    console.log("Fecha de Ingreso (input): " + document.getElementById('fechaIngreso').value);
+                    console.log("Puesto (dropdown): " + puestoDropdown.options[puestoDropdown.selectedIndex].text);
+                    console.log("Rol (dropdown): " + rolDropdown.options[rolDropdown.selectedIndex].text);
+                });
+            });
+        });
+    </script>
+    <script>
+        // Bootstrap validation script
+        (function () {
+            'use strict'
+
+            // Fetch all the forms we want to apply custom Bootstrap validation styles to
+            var forms = document.querySelectorAll('.needs-validation')
+
+            // Loop over them and prevent submission
+            Array.prototype.slice.call(forms)
+                .forEach(function (form) {
+                    form.addEventListener('submit', function (event) {
+                        if (!form.checkValidity()) {
+                            event.preventDefault()
+                            event.stopPropagation()
+                        }
+
+                        form.classList.add('was-validated')
+                    }, false)
+                })
+        })()
+    </script>
+
+
+
+</body>
+</html>

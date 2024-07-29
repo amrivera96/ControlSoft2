@@ -20,6 +20,19 @@ namespace ControlSoft.Models
         public string TurnoDescripcion { get; set; }
     }
 
+    public class HorarioViewModel
+    {
+        public int IdEmpleado { get; set; }
+        public string Fecha { get; set; }
+        public List<Horario> Horarios { get; set; }
+    }
+
+    public class Horario
+    {
+        public int? IdTurno { get; set; }
+        public string NombreTurno { get; set; }
+        public string Fecha { get; set; }
+    }
 
 
 }
