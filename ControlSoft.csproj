@@ -228,6 +228,8 @@
     <Content Include="Views\Home\registroEmpleado.cshtml" />
     <Content Include="Views\Home\turnos.cshtml" />
     <Content Include="Views\Home\DashboardInicioSup.cshtml" />
+    <Content Include="Views\Home\EdicionComponentes.cshtml" />
+    <Content Include="Views\Home\InsertarMarca.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>

@@ -1,5 +1,5 @@
 ﻿@{
-    ViewBag.Title = "DashboardInicioSup";
+    ViewBag.Title = "EdicionComponentes";
     Layout = null;
 
 }
@@ -65,32 +65,10 @@
             <!-- Contenido principal -->
             <div class="row align-items-center justify-content-center h-100 mt-custom">
 
-                <!-- Copiar codigo -->
-
                 <div class="container">
 
                     <div class="card-container">
-                        <div class="card">
-                            <div class="card-buttons">
-                                <a href="#" class="btn">
-                                    <img src="~/Content/iconos/usuario.png" alt="Icono 1">
-                                </a>
-                            </div>
-                            <div class="card-content">
-                                <h3>Perfil</h3>
-                            </div>
-                        </div>
 
-                        <div class="card">
-                            <div class="card-buttons">
-                                <a href="#" class="btn">
-                                    <img src="~/Content/iconos/horarios.png" alt="Icono 2">
-                                </a>
-                            </div>
-                            <div class="card-content">
-                                <h3>Horarios</h3>
-                            </div>
-                        </div>
 
                         <div class="card">
                             <div class="card-buttons">
@@ -171,23 +149,23 @@
 
                         <div class="card">
                             <div class="card-buttons">
-                                <a href="@Url.Action("BandejaActividadesJefe", "Home")" class="btn">
+                                <a href="@Url.Action("TiposActividades", "Home")" class="btn">
                                     <img src="~/Content/iconos/roles.png" alt="Icono 9">
                                 </a>
                             </div>
                             <div class="card-content">
-                                <h3>Edicion de componentes</h3>
+                                <h3>Editar tipos de actividades</h3>
                             </div>
                         </div>
 
                         <div class="card">
                             <div class="card-buttons">
-                                <a href="@Url.Action("BandejaActividadesJefe", "Home")" class="btn">
+                                <a href="@Url.Action("TiposInconsistencia", "Home")" class="btn">
                                     <img src="~/Content/iconos/actividades.png" alt="Icono 10">
                                 </a>
                             </div>
                             <div class="card-content">
-                                <h3>Bandeja Actividades</h3>
+                                <h3>Editar tipos de inconsistencias</h3>
                             </div>
                         </div>
 

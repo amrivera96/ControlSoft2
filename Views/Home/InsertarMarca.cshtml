@@ -1,0 +1,65 @@
+﻿@{
+    ViewBag.Title = "Insertar Marca";
+    Layout = null;
+}
+
+<h2>Insertar Marca</h2>
+
+<form id="formInsertarMarca">
+    <div>
+        <label>Id Empleado:</label>
+        <input type="number" id="idEmpleado" name="idEmpleado" required />
+    </div>
+    <div>
+        <label>Fecha Marca:</label>
+        <input type="date" id="fechaMarca" name="fechaMarca" required />
+    </div>
+    <div>
+        <label>Hora Entrada:</label>
+        <input type="time" id="horaEntrada" name="horaEntrada" required />
+    </div>
+    <div>
+        <label>Hora Salida:</label>
+        <input type="time" id="horaSalida" name="horaSalida" required />
+    </div>
+    <button type="submit">Insertar Marca</button>
+</form>
+
+<div id="result"></div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#formInsertarMarca').submit(function (e) {
+            e.preventDefault();
+
+            var data = {
+                idEmpleado: $('#idEmpleado').val(),
+                fechaMarca: $('#fechaMarca').val(),
+                horaEntrada: $('#horaEntrada').val(),
+                horaSalida: $('#horaSalida').val()
+            };
+
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("InsertarMarca", "Home")',
+                data: data,
+                success: function (response) {
+                    if (response.success) {
+                        alert(response.message);
+                        if (response.inconsistencias.length > 0) {
+                            $('#result').html('<h3>Inconsistencias generadas:</h3><ul>' + response.inconsistencias.map(function (msg) { return '<li>' + msg + '</li>'; }).join('') + '</ul>');
+                        } else {
+                            $('#result').html('<h3>No se generaron inconsistencias.</h3>');
+                        }
+                    } else {
+                        alert(response.message);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    alert('Error: ' + error);
+                }
+            });
+        });
+    });
+</script>

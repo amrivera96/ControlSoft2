@@ -7,15 +7,134 @@ using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.Mail;
+using System.Net;
 using System.Web;
 using System.Web.Mvc;
 using ControlSoft.Models;
+
 
 namespace ControlSoft.Controllers
 {
     public class HomeController : Controller
     {
         private string connectionString = ConfigurationManager.ConnectionStrings["ControlSoftCrDbContext"].ConnectionString;
+
+
+        public ActionResult InsertarMarca()
+        {
+            return View();
+        }
+
+        // Método para insertar una marca y generar inconsistencias
+        [HttpPost]
+        public ActionResult InsertarMarca(int idEmpleado, DateTime fechaMarca, TimeSpan horaEntrada, TimeSpan horaSalida)
+        {
+            try
+            {
+                List<string> mensajesInconsistencias = new List<string>();
+                string correoDestino = null;
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    // Insertar la marca y obtener el ID de la marca insertada
+                    int idMarca;
+                    using (SqlCommand command = new SqlCommand("sp_InsertarMarca", connection))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+                        command.Parameters.AddWithValue("@idEmpleado", idEmpleado);
+                        command.Parameters.AddWithValue("@fechaMarca", fechaMarca);
+                        command.Parameters.AddWithValue("@horaEntrada", horaEntrada);
+                        command.Parameters.AddWithValue("@horaSalida", horaSalida);
+
+                        idMarca = Convert.ToInt32(command.ExecuteScalar());
+                    }
+
+                    // Generar inconsistencias y obtener el correo y mensajes
+                    using (SqlCommand inconsistenciaCommand = new SqlCommand("sp_GenerarInconsistencia", connection))
+                    {
+                        inconsistenciaCommand.CommandType = CommandType.StoredProcedure;
+                        inconsistenciaCommand.Parameters.AddWithValue("@idMarca", idMarca);
+                        inconsistenciaCommand.Parameters.Add("@correoDestino", SqlDbType.VarChar, 50).Direction = ParameterDirection.Output;
+                        inconsistenciaCommand.Parameters.Add("@seGeneroInconsistencia", SqlDbType.Bit).Direction = ParameterDirection.Output;
+
+                        using (SqlDataReader reader = inconsistenciaCommand.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                mensajesInconsistencias.Add(reader["mensaje"].ToString());
+                            }
+                        }
+
+                        bool seGeneroInconsistencia = Convert.ToBoolean(inconsistenciaCommand.Parameters["@seGeneroInconsistencia"].Value);
+                        if (seGeneroInconsistencia)
+                        {
+                            correoDestino = inconsistenciaCommand.Parameters["@correoDestino"].Value.ToString();
+                            // Enviar el correo de inconsistencia
+                            string mensaje = string.Join("<br>", mensajesInconsistencias);
+                            EnviarCorreoInconsistencia(correoDestino, mensaje);
+                        }
+                    }
+                }
+
+                return Json(new { success = true, message = "Marca insertada correctamente.", inconsistencias = mensajesInconsistencias });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // Método para enviar correos de inconsistencias
+        private void EnviarCorreoInconsistencia(string correoDestino, string mensaje)
+        {
+            try
+            {
+                var fromAddress = new MailAddress("kreuzdev@gmail.com", "Equipo ControlSoftCR");
+                var toAddress = new MailAddress(correoDestino);
+                const string fromPassword = "kgqr aeqr rosm eydn"; // Asegúrate de que esta contraseña es correcta
+                const string subject = "Notificación de Inconsistencia";
+
+                string body = $@"
+                <html>
+                <body>
+                    <h2>Hola,</h2>
+                    <p>{mensaje}</p>
+                    <br>
+                    <p>Saludos,</p>
+                    <p>El equipo de ControlSoftCr</p>
+                </body>
+                </html>";
+
+                var smtp = new SmtpClient
+                {
+                    Host = "smtp.gmail.com",
+                    Port = 587,
+                    EnableSsl = true,
+                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                    UseDefaultCredentials = false,
+                    Credentials = new NetworkCredential(fromAddress.Address, fromPassword)
+                };
+
+                using (var message = new MailMessage(fromAddress, toAddress)
+                {
+                    Subject = subject,
+                    Body = body,
+                    IsBodyHtml = true
+                })
+                {
+                    smtp.Send(message);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Registrar el mensaje de la excepción y la traza de pila
+                System.Diagnostics.Debug.WriteLine("Error al enviar correo: " + ex.Message);
+                System.Diagnostics.Debug.WriteLine("Stack Trace: " + ex.StackTrace);
+            }
+        }
 
 
         public ActionResult TestDatabaseConnection()
@@ -472,7 +591,7 @@ namespace ControlSoft.Controllers
                     conn.Open();
                     cmd.ExecuteNonQuery();
                     TempData["Mensaje"] = mensajeParam.Value.ToString();
-                    TempData["MensajeTipo"] = "exito"; // Mensaje de éxito
+                    TempData["MensajeTipo"] = mensajeParam.Value.ToString() == "Actividad eliminada exitosamente." ? "exito" : "error";
                 }
             }
 
@@ -896,29 +1015,36 @@ namespace ControlSoft.Controllers
             return RedirectToAction("HistorialHorasJefe");
         }
 
-
-        private List<HistorialHoras> ObtenerHistorialHorasEmpsolicitadas()
+        //Metodo para leer las solicitudes de horas extra que se han realizado al empleado que inicia sesion.
+        private List<HistorialHoras> ObtenerHistorialHorasEmpSolicitadas()
         {
+            int idEmpleado = Convert.ToInt32(Session["idEmpleado"]); // Obtener el idEmpleado de la sesión
+
             List<HistorialHoras> solicitudes = new List<HistorialHoras>();
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
-                using (SqlCommand cmd = new SqlCommand("sp_LeerHistorialHorasEmp", conn))
+                using (SqlCommand cmd = new SqlCommand("sp_LeerHistorialHorasEmpSolicitadas", conn))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@idEmpleado", idEmpleado); // Añadir parámetro para idEmpleado
+
                     conn.Open();
 
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
                         while (reader.Read())
                         {
+                            string estadoSolicitudHoras = reader["estadoSolicitudHoras"] == DBNull.Value ? "Pendiente" :
+                                (Convert.ToBoolean(reader["estadoSolicitudHoras"]) ? "Aprobada" : "Rechazada");
+
                             HistorialHoras solicitud = new HistorialHoras
                             {
                                 idSolicitud = Convert.ToInt32(reader["idSolicitud"]),
                                 Empleado = reader["Empleado"].ToString(),
                                 Actividad = reader["Actividad"].ToString(),
                                 cantidadHoras = Convert.ToDecimal(reader["cantidadHoras"]),
-                                Estado = reader["Estado"].ToString(),
+                                Estado = estadoSolicitudHoras,
                                 fechaSolicitada = Convert.ToDateTime(reader["fechaSolicitada"]),
                                 fechaSolicitud = Convert.ToDateTime(reader["fechaSolicitud"]),
                                 motivoSolicitud = reader["motivoSolicitud"].ToString()
@@ -933,73 +1059,48 @@ namespace ControlSoft.Controllers
             return solicitudes;
         }
 
-
         // Acción para mostrar el historial de horas extras
         public ActionResult HistorialHorasEmp()
         {
-            List<HistorialHoras> solicitudes = ObtenerHistorialHorasEmpsolicitadas();
+            List<HistorialHoras> solicitudes = ObtenerHistorialHorasEmpSolicitadas();
             ViewBag.Empleados = ObtenerEmpleados();
             ViewBag.Actividades = ObtenerActividades();
             return View(solicitudes);
         }
 
-        // Acción para aprobar una solicitud de horas extra
+        // Acción para aprobar o rechazar una solicitud de horas extra
         [HttpPost]
-        public ActionResult AprobarSolicitudHoras(int idSolicitud)
+        public ActionResult AprobarRechazarSolicitudHoras(int idSolicitud, bool aprobar)
         {
+            string mensaje = string.Empty;
+
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
-                using (SqlCommand cmd = new SqlCommand("UPDATE AprobacionHoras SET estadoAproHoras = 1, fechaAproHoras = @fechaAproHoras WHERE idSolicitud = @idSolicitud", conn))
+                using (SqlCommand cmd = new SqlCommand("sp_AprobarRechazarHoras", conn))
                 {
-                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@idSolicitud", idSolicitud);
-                    cmd.Parameters.AddWithValue("@fechaAproHoras", DateTime.Now);
+                    cmd.Parameters.AddWithValue("@estadoSolicitudHoras", aprobar); // Aprobado/Rechazado
+                    cmd.Parameters.Add("@mensaje", SqlDbType.NVarChar, 250).Direction = ParameterDirection.Output;
 
                     conn.Open();
                     cmd.ExecuteNonQuery();
-                }
 
-                using (SqlCommand cmd = new SqlCommand("UPDATE SolicitudHoras SET estadoSolicitudHoras = 1 WHERE idSolicitud = @idSolicitud", conn))
-                {
-                    cmd.CommandType = CommandType.Text;
-                    cmd.Parameters.AddWithValue("@idSolicitud", idSolicitud);
-
-                    cmd.ExecuteNonQuery();
+                    mensaje = cmd.Parameters["@mensaje"].Value.ToString();
                 }
             }
+
+            TempData["Mensaje"] = mensaje;
+            TempData["TipoMensaje"] = "success"; // Siempre éxito
 
             return RedirectToAction("HistorialHorasEmp");
         }
 
-        // Acción para rechazar una solicitud de horas extra
-        [HttpPost]
-        public ActionResult RechazarSolicitudHoras(int idSolicitud)
+        public ActionResult EdicionComponentes()
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                using (SqlCommand cmd = new SqlCommand("UPDATE AprobacionHoras SET estadoAproHoras = 0, fechaAproHoras = @fechaAproHoras WHERE idSolicitud = @idSolicitud", conn))
-                {
-                    cmd.CommandType = CommandType.Text;
-                    cmd.Parameters.AddWithValue("@idSolicitud", idSolicitud);
-                    cmd.Parameters.AddWithValue("@fechaAproHoras", DateTime.Now);
-
-                    conn.Open();
-                    cmd.ExecuteNonQuery();
-                }
-
-                using (SqlCommand cmd = new SqlCommand("UPDATE SolicitudHoras SET estadoSolicitudHoras = 0 WHERE idSolicitud = @idSolicitud", conn))
-                {
-                    cmd.CommandType = CommandType.Text;
-                    cmd.Parameters.AddWithValue("@idSolicitud", idSolicitud);
-
-                    cmd.ExecuteNonQuery();
-                }
-            }
-
-            return RedirectToAction("HistorialHorasEmp");
+            return View();
         }
 
-        
 
         public ActionResult shared()
         {
