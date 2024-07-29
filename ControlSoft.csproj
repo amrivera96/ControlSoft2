@@ -137,6 +137,7 @@
     <Compile Include="Models\departamentosModels.cs" />
     <Compile Include="Models\horarioModel.cs" />
     <Compile Include="Models\loginGeneral.cs" />
+    <Compile Include="Models\marcas.cs" />
     <Compile Include="Models\puestosModels.cs" />
     <Compile Include="Models\RegistroEmpleados.cs" />
     <Compile Include="Models\RegistroInconsistencia.cs" />
@@ -146,6 +147,7 @@
     <Content Include="Content\css\Crud.css" />
     <Content Include="Content\css\estiloDashboardInicio.css" />
     <Content Include="Content\css\estiloFormularios.css" />
+    <Content Include="Content\css\EstiloMarcas.css" />
     <Content Include="Content\css\styles.css" />
     <Content Include="Content\css\Gestion.css" />
     <Content Include="Content\iconos\actividades.png" />
@@ -228,6 +230,7 @@
     <Content Include="Views\Home\registroEmpleado.cshtml" />
     <Content Include="Views\Home\turnos.cshtml" />
     <Content Include="Views\Home\DashboardInicioSup.cshtml" />
+    <Content Include="Views\Home\Marcas.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
