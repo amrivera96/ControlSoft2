@@ -235,6 +235,8 @@
     <Content Include="Views\Home\registrarTurnoTrabajo.cshtml" />
     <Content Include="Views\Home\perfilEmpleado.cshtml" />
     <Content Include="Views\Home\gestionarEmpleados.cshtml" />
+    <Content Include="Views\Home\EdicionComponentes.cshtml" />
+    <Content Include="Views\Home\InsertarMarca.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>

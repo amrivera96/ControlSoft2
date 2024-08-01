@@ -51,7 +51,7 @@
                             <a class="nav-link" href="#">Planes</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Contacto</a>
+                            <a class="nav-link" href="@Url.Action("login", "Home")">Salir</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="#">
@@ -80,9 +80,10 @@
                             </div>
                         </div>
 
+
                         <div class="card">
                             <div class="card-buttons">
-                                <a href="#" class="btn">
+                                <a href="@Url.Action("InsertarMarca", "Home")" class="btn">
                                     <img src="~/Content/iconos/marcas.png" alt="Icono 1">
                                 </a>
                             </div>
@@ -90,6 +91,18 @@
                                 <h3>Marcas</h3>
                             </div>
                         </div>
+
+                        <div class="card">
+                            <div class="card-buttons">
+                                <a href="@Url.Action("RegistrarActividadDiariaEmp", "Home")" class="btn">
+                                    <img src="~/Content/iconos/actividades.png" alt="Icono 10">
+                                </a>
+                            </div>
+                            <div class="card-content">
+                                <h3>Actividades</h3>
+                            </div>
+                        </div>
+
 
                         <div class="card">
                             <div class="card-buttons">
@@ -104,7 +117,7 @@
 
                         <div class="card">
                             <div class="card-buttons">
-                                <a href="" class="btn">
+                                <a href="@Url.Action("HistorialInconsistenciasEmp", "Home")" class="btn">
                                     <img src="~/Content/iconos/inconsistencias.png" alt="Icono 1">
                                 </a>
                             </div>
@@ -112,6 +125,7 @@
                                 <h3>Inconsistencias</h3>
                             </div>
                         </div>
+
 
                         <div class="card">
                             <div class="card-buttons">
@@ -137,7 +151,7 @@
 
                         <div class="card">
                             <div class="card-buttons">
-                                <a href="#" class="btn">
+                                <a href="@Url.Action("HistorialHorasEmp", "Home")" class="btn">
                                     <img src="~/Content/iconos/horasExtra.png" alt="Icono 1">
                                 </a>
                             </div>

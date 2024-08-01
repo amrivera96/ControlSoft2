@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
+using System.Data.Entity.Core.Common.CommandTrees.ExpressionBuilder;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO;
@@ -12,11 +13,139 @@ using System.Web;
 using System.Web.Mvc;
 using ControlSoft.Models;
 
+
 namespace ControlSoft.Controllers
 {
     public class HomeController : Controller
     {
         private string connectionString = ConfigurationManager.ConnectionStrings["ControlSoftCrDbContext"].ConnectionString;
+
+
+        public ActionResult InsertarMarca()
+        {
+            return View();
+        }
+
+        // Método para insertar una marca y generar inconsistencias
+        [HttpPost]
+        public ActionResult InsertarMarca(TimeSpan horaEntrada, TimeSpan horaSalida)
+        {
+            try
+            {
+                List<string> mensajesInconsistencias = new List<string>();
+                string correoDestino = null;
+                int idEmpleado = Convert.ToInt32(Session["idEmpleado"]); // Obtener el idEmpleado de la sesión
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    // Insertar la marca y obtener el ID de la marca insertada
+                    int idMarca;
+                    using (SqlCommand command = new SqlCommand("sp_InsertarMarca", connection))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+                        command.Parameters.AddWithValue("@idEmpleado", idEmpleado);
+                        command.Parameters.AddWithValue("@horaEntrada", horaEntrada);
+                        command.Parameters.AddWithValue("@horaSalida", horaSalida);
+
+                        try
+                        {
+                            idMarca = Convert.ToInt32(command.ExecuteScalar());
+                        }
+                        catch (SqlException ex)
+                        {
+                            if (ex.Number == 50000) // Número de error personalizado en RAISERROR
+                            {
+                                return Json(new { success = false, message = ex.Message });
+                            }
+                            throw;
+                        }
+                    }
+
+                    // Generar inconsistencias y obtener el correo y mensajes
+                    using (SqlCommand inconsistenciaCommand = new SqlCommand("sp_GenerarInconsistencia", connection))
+                    {
+                        inconsistenciaCommand.CommandType = CommandType.StoredProcedure;
+                        inconsistenciaCommand.Parameters.AddWithValue("@idMarca", idMarca);
+                        inconsistenciaCommand.Parameters.Add("@correoDestino", SqlDbType.VarChar, 50).Direction = ParameterDirection.Output;
+                        inconsistenciaCommand.Parameters.Add("@seGeneroInconsistencia", SqlDbType.Bit).Direction = ParameterDirection.Output;
+
+                        using (SqlDataReader reader = inconsistenciaCommand.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                mensajesInconsistencias.Add(reader["mensaje"].ToString());
+                            }
+                        }
+
+                        bool seGeneroInconsistencia = Convert.ToBoolean(inconsistenciaCommand.Parameters["@seGeneroInconsistencia"].Value);
+                        if (seGeneroInconsistencia)
+                        {
+                            correoDestino = inconsistenciaCommand.Parameters["@correoDestino"].Value.ToString();
+                            // Enviar el correo de inconsistencia
+                            string mensaje = string.Join("<br>", mensajesInconsistencias);
+                            EnviarCorreoInconsistencia(correoDestino, mensaje);
+                        }
+                    }
+                }
+
+                return Json(new { success = true, message = "Marca insertada correctamente.", inconsistencias = mensajesInconsistencias });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // Método para enviar correos de inconsistencias
+        private void EnviarCorreoInconsistencia(string correoDestino, string mensaje)
+        {
+            try
+            {
+                var fromAddress = new MailAddress("kreuzdev@gmail.com", "Equipo ControlSoftCR");
+                var toAddress = new MailAddress(correoDestino);
+                const string fromPassword = "kgqr aeqr rosm eydn"; // Asegúrate de que esta contraseña es correcta
+                const string subject = "Notificación de Inconsistencia";
+
+                string body = $@"
+                <html>
+                <body>
+                    <h2>Hola,</h2>
+                    <p>{mensaje}</p>
+                    <br>
+                    <p>Saludos,</p>
+                    <p>El equipo de ControlSoftCr</p>
+                </body>
+                </html>";
+
+                var smtp = new SmtpClient
+                {
+                    Host = "smtp.gmail.com",
+                    Port = 587,
+                    EnableSsl = true,
+                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                    UseDefaultCredentials = false,
+                    Credentials = new NetworkCredential(fromAddress.Address, fromPassword)
+                };
+
+                using (var message = new MailMessage(fromAddress, toAddress)
+                {
+                    Subject = subject,
+                    Body = body,
+                    IsBodyHtml = true
+                })
+                {
+                    smtp.Send(message);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Registrar el mensaje de la excepción y la traza de pila
+                System.Diagnostics.Debug.WriteLine("Error al enviar correo: " + ex.Message);
+                System.Diagnostics.Debug.WriteLine("Stack Trace: " + ex.StackTrace);
+            }
+        }
 
 
         public ActionResult TestDatabaseConnection()
@@ -36,18 +165,6 @@ namespace ControlSoft.Controllers
                 return Content("Error de conexión a la base de datos: " + ex.Message);
             }
         }
-
-        // Acción para simular el inicio de sesión
-        public ActionResult Login2()
-        {
-            // Simular el inicio de sesión y establecer el ID del empleado en la sesión
-            int idEmpleado = 301230123; // Supongamos que es 1
-            Session["idEmpleado"] = idEmpleado;
-
-            // Redirigir a la página de DashboardInicioEmp
-            return RedirectToAction("DashboardInicioEmp");
-        }
-
 
         // Acción para mostrar la vista de tipos de inconsistencias
         public ActionResult TiposInconsistencia()
@@ -172,13 +289,8 @@ namespace ControlSoft.Controllers
         // Acción para mostrar el historial de inconsistencias del empleado
         public ActionResult HistorialInconsistenciasEmp()
         {
-            // Asumimos que el idEmpleado es 1 si no está en la sesión
-            if (Session["idEmpleado"] == null)
-            {
-                Session["idEmpleado"] = 301230123;
-            }
-
             int idEmpleado = Convert.ToInt32(Session["idEmpleado"]); // Obtener el idEmpleado de la sesión
+
             List<RegistroInconsistencia> inconsistencias = new List<RegistroInconsistencia>();
 
             using (SqlConnection conn = new SqlConnection(connectionString))
@@ -277,8 +389,12 @@ namespace ControlSoft.Controllers
         }
 
 
+
+        // Bandeja Inconsistencias supervisor
         public ActionResult BandejaInconsistenciasJefe()
         {
+            int idEmpleado = Convert.ToInt32(Session["idEmpleado"]); // Obtener el idEmpleado de la sesión
+
             List<RegistroInconsistencia> inconsistencias = new List<RegistroInconsistencia>();
 
             using (SqlConnection conn = new SqlConnection(connectionString))
@@ -286,6 +402,7 @@ namespace ControlSoft.Controllers
                 using (SqlCommand cmd = new SqlCommand("sp_LeerTodosLosRegistrosGestiones", conn))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@idEmpleado", idEmpleado); // Pasar el idEmpleado como parámetro
                     conn.Open();
 
                     using (SqlDataReader reader = cmd.ExecuteReader())
@@ -332,6 +449,7 @@ namespace ControlSoft.Controllers
             return View(inconsistencias);
         }
 
+
         // Acción para gestionar las inconsistencias de los empleados
         [HttpPost]
         public ActionResult GestionInconsistenciasJefe(int idInconsistencia, bool estadoInconsistencia, string observacionGestion)
@@ -344,7 +462,6 @@ namespace ControlSoft.Controllers
                     cmd.Parameters.AddWithValue("@idInconsistencia", idInconsistencia);
                     cmd.Parameters.AddWithValue("@fechaGestion", DateTime.Now);
                     cmd.Parameters.AddWithValue("@estadoGestion", true); // Siempre será true para indicar que está gestionada
-                    cmd.Parameters.AddWithValue("@idJefe", 1); // Asume que el ID del jefe se obtiene de la identidad del usuario actual
                     cmd.Parameters.AddWithValue("@observacionGestion", observacionGestion);
                     cmd.Parameters.AddWithValue("@estadoInconsistencia", estadoInconsistencia); // Agregamos el estado de inconsistencia
 
@@ -485,7 +602,7 @@ namespace ControlSoft.Controllers
                     conn.Open();
                     cmd.ExecuteNonQuery();
                     TempData["Mensaje"] = mensajeParam.Value.ToString();
-                    TempData["MensajeTipo"] = "exito"; // Mensaje de éxito
+                    TempData["MensajeTipo"] = mensajeParam.Value.ToString() == "Actividad eliminada exitosamente." ? "exito" : "error";
                 }
             }
 
@@ -524,7 +641,7 @@ namespace ControlSoft.Controllers
         // Acción para mostrar la vista de registro de actividades
         public ActionResult RegistrarActividadDiariaEmp()
         {
-            int idEmpleado = Session["idEmpleado"] != null ? (int)Session["idEmpleado"] : 301230123;
+            int idEmpleado = Convert.ToInt32(Session["idEmpleado"]); // Obtener el idEmpleado de la sesión
 
             var viewModel = new RegistrarActividadViewModel
             {
@@ -574,7 +691,9 @@ namespace ControlSoft.Controllers
         [HttpPost]
         public ActionResult CrearRegistroActividad(int idAct, TimeSpan horaInicio, TimeSpan horaFinal)
         {
-            int idEmp = Session["idEmpleado"] != null ? (int)Session["idEmpleado"] : 301230123;
+
+            int idEmp = Convert.ToInt32(Session["idEmpleado"]); // Obtener el idEmpleado de la sesión
+
             string mensaje = string.Empty;
 
             using (SqlConnection conn = new SqlConnection(connectionString))
@@ -603,9 +722,6 @@ namespace ControlSoft.Controllers
             TempData["Mensaje"] = mensaje; // Usar TempData para pasar el mensaje a la vista
             return RedirectToAction("RegistrarActividadDiariaEmp");
         }
-
-
-
 
 
         //Metodo para obtener el registro de las actividades
@@ -654,7 +770,8 @@ namespace ControlSoft.Controllers
         //Mostrar bandeja de actividades del jefe
         public ActionResult BandejaActividadesJefe()
         {
-            int idJefe = Session["idEmpleado"] != null ? (int)Session["idEmpleado"] : 301240124;
+            int idJefe = Convert.ToInt32(Session["idEmpleado"]); // Obtener el idEmpleado de la sesión
+
             List<RegistroActividades> actividades = new List<RegistroActividades>();
 
             using (SqlConnection conn = new SqlConnection(connectionString))
@@ -700,7 +817,8 @@ namespace ControlSoft.Controllers
         [HttpPost]
         public ActionResult GestionarActividad(int idGesAct, string obserGest, bool estadoGesAct)
         {
-            int idJefe = Session["idEmpleado"] != null ? (int)Session["idEmpleado"] : 301240124; // Asegurando que el idJefe se toma de la sesión o asigna un valor por defecto
+            int idJefe = Convert.ToInt32(Session["idEmpleado"]); // Obtener el idEmpleado de la sesión
+                                                                 // 
             string mensaje = string.Empty;
 
             using (SqlConnection conn = new SqlConnection(connectionString))
@@ -731,11 +849,11 @@ namespace ControlSoft.Controllers
         }
 
 
-
-
-        //Pantalla para monitorear el rendimiento del empleado en vista jefe
+        // Pantalla para monitorear el rendimiento del empleado en vista jefe
         public ActionResult MonitoreoRendimientoJefe()
         {
+            int idJefe = Convert.ToInt32(Session["idEmpleado"]); // Obtener el idEmpleado de la sesión
+
             List<MonitoreoRendimiento> monitoreo = new List<MonitoreoRendimiento>();
 
             using (SqlConnection conn = new SqlConnection(connectionString))
@@ -743,6 +861,7 @@ namespace ControlSoft.Controllers
                 using (SqlCommand cmd = new SqlCommand("sp_LeerMonitoreoRendimientoJefe", conn))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@idJefe", idJefe); // Pasar el idJefe como parámetro
                     conn.Open();
 
                     using (SqlDataReader reader = cmd.ExecuteReader())
@@ -773,106 +892,8 @@ namespace ControlSoft.Controllers
         // Acción para mostrar el historial de horas extras
         public ActionResult HistorialHorasJefe()
         {
-            List<HistorialHoras> solicitudes = ObtenerHistorialHorasEmp();
-            ViewBag.Empleados = ObtenerEmpleados();
-            ViewBag.Actividades = ObtenerActividades();
-            return View(solicitudes);
-        }
+            int idJefe = Convert.ToInt32(Session["idEmpleado"]); // Obtener el idEmpleado de la sesión
 
-        // Acción para crear una nueva solicitud de horas extra
-        [HttpPost]
-        public ActionResult CrearSolicitudHoras(int idEmpleado, int idAct, decimal cantidadHoras, DateTime fechaSolicitada, string motivoSolicitud)
-        {
-            int idJefe = 1; // Asume que el ID del jefe es 1 para simplificar
-
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                using (SqlCommand cmd = new SqlCommand("sp_CrearSolicitudHoras", conn))
-                {
-                    cmd.CommandType = CommandType.StoredProcedure;
-                    cmd.Parameters.AddWithValue("@fechaSolicitud", DateTime.Now);
-                    cmd.Parameters.AddWithValue("@idJefe", idJefe);
-                    cmd.Parameters.AddWithValue("@idEmpleado", idEmpleado);
-                    cmd.Parameters.AddWithValue("@idAct", idAct);
-                    cmd.Parameters.AddWithValue("@cantidadHoras", cantidadHoras);
-                    cmd.Parameters.AddWithValue("@fechaSolicitada", fechaSolicitada);
-                    cmd.Parameters.AddWithValue("@motivoSolicitud", motivoSolicitud);
-
-                    conn.Open();
-                    cmd.ExecuteNonQuery();
-                }
-            }
-
-            return RedirectToAction("HistorialHorasJefe");
-        }
-
-        // Acción para mostrar el historial de horas extras
-        public ActionResult HistorialHorasEmp()
-        {
-            List<HistorialHoras> solicitudes = ObtenerHistorialHorasEmp();
-            ViewBag.Empleados = ObtenerEmpleados();
-            ViewBag.Actividades = ObtenerActividades();
-            return View(solicitudes);
-        }
-
-        // Acción para aprobar una solicitud de horas extra
-        [HttpPost]
-        public ActionResult AprobarSolicitudHoras(int idSolicitud)
-        {
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                using (SqlCommand cmd = new SqlCommand("UPDATE AprobacionHoras SET estadoAproHoras = 1, fechaAproHoras = @fechaAproHoras WHERE idSolicitud = @idSolicitud", conn))
-                {
-                    cmd.CommandType = CommandType.Text;
-                    cmd.Parameters.AddWithValue("@idSolicitud", idSolicitud);
-                    cmd.Parameters.AddWithValue("@fechaAproHoras", DateTime.Now);
-
-                    conn.Open();
-                    cmd.ExecuteNonQuery();
-                }
-
-                using (SqlCommand cmd = new SqlCommand("UPDATE SolicitudHoras SET estadoSolicitudHoras = 1 WHERE idSolicitud = @idSolicitud", conn))
-                {
-                    cmd.CommandType = CommandType.Text;
-                    cmd.Parameters.AddWithValue("@idSolicitud", idSolicitud);
-
-                    cmd.ExecuteNonQuery();
-                }
-            }
-
-            return RedirectToAction("HistorialHorasEmp");
-        }
-
-        // Acción para rechazar una solicitud de horas extra
-        [HttpPost]
-        public ActionResult RechazarSolicitudHoras(int idSolicitud)
-        {
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                using (SqlCommand cmd = new SqlCommand("UPDATE AprobacionHoras SET estadoAproHoras = 0, fechaAproHoras = @fechaAproHoras WHERE idSolicitud = @idSolicitud", conn))
-                {
-                    cmd.CommandType = CommandType.Text;
-                    cmd.Parameters.AddWithValue("@idSolicitud", idSolicitud);
-                    cmd.Parameters.AddWithValue("@fechaAproHoras", DateTime.Now);
-
-                    conn.Open();
-                    cmd.ExecuteNonQuery();
-                }
-
-                using (SqlCommand cmd = new SqlCommand("UPDATE SolicitudHoras SET estadoSolicitudHoras = 0 WHERE idSolicitud = @idSolicitud", conn))
-                {
-                    cmd.CommandType = CommandType.Text;
-                    cmd.Parameters.AddWithValue("@idSolicitud", idSolicitud);
-
-                    cmd.ExecuteNonQuery();
-                }
-            }
-
-            return RedirectToAction("HistorialHorasEmp");
-        }
-
-        private List<HistorialHoras> ObtenerHistorialHorasEmp()
-        {
             List<HistorialHoras> solicitudes = new List<HistorialHoras>();
 
             using (SqlConnection conn = new SqlConnection(connectionString))
@@ -880,6 +901,7 @@ namespace ControlSoft.Controllers
                 using (SqlCommand cmd = new SqlCommand("sp_LeerHistorialHorasEmp", conn))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@idJefe", idJefe); // Pasar el idJefe como parámetro
                     conn.Open();
 
                     using (SqlDataReader reader = cmd.ExecuteReader())
@@ -893,8 +915,8 @@ namespace ControlSoft.Controllers
                                 Actividad = reader["Actividad"].ToString(),
                                 cantidadHoras = Convert.ToDecimal(reader["cantidadHoras"]),
                                 Estado = reader["Estado"].ToString(),
-                                fechaSolicitada = Convert.ToDateTime(reader["fechaSolicitada"]),
                                 fechaSolicitud = Convert.ToDateTime(reader["fechaSolicitud"]),
+                                fechaSolicitada = Convert.ToDateTime(reader["fechaSolicitada"]),
                                 motivoSolicitud = reader["motivoSolicitud"].ToString()
                             };
 
@@ -904,19 +926,25 @@ namespace ControlSoft.Controllers
                 }
             }
 
-            return solicitudes;
+            ViewBag.Empleados = ObtenerEmpleados();
+            ViewBag.Actividades = ObtenerActividades();
+            return View(solicitudes);
         }
+
 
         //Metodo para obtener empleados
         private List<Empleado> ObtenerEmpleados()
         {
+            int idJefe = Convert.ToInt32(Session["idEmpleado"]); // Obtener el idEmpleado de la sesión
+
             List<Empleado> empleados = new List<Empleado>();
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
-                using (SqlCommand cmd = new SqlCommand("SELECT idEmpleado, nombre, apellidos FROM Empleado", conn))
+                using (SqlCommand cmd = new SqlCommand("ObtenerEmpleadosSesion", conn))
                 {
-                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@idJefe", idJefe);
                     conn.Open();
 
                     using (SqlDataReader reader = cmd.ExecuteReader())
@@ -938,6 +966,7 @@ namespace ControlSoft.Controllers
 
             return empleados;
         }
+
 
         //Metodo para obtener actividades
         private List<TiposActividades> ObtenerActividades()
@@ -970,6 +999,120 @@ namespace ControlSoft.Controllers
             return actividades;
         }
 
+        // Acción para crear una nueva solicitud de horas extra
+        [HttpPost]
+        public ActionResult CrearSolicitudHoras(int idEmpleado, int idAct, decimal cantidadHoras, DateTime fechaSolicitada, string motivoSolicitud)
+        {
+            int idJefe = Convert.ToInt32(Session["idEmpleado"]); // Obtener el idEmpleado de la sesión
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                using (SqlCommand cmd = new SqlCommand("sp_CrearSolicitudHoras", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@fechaSolicitud", DateTime.Now);
+                    cmd.Parameters.AddWithValue("@idJefe", idJefe);
+                    cmd.Parameters.AddWithValue("@idEmpleado", idEmpleado);
+                    cmd.Parameters.AddWithValue("@idAct", idAct);
+                    cmd.Parameters.AddWithValue("@cantidadHoras", cantidadHoras);
+                    cmd.Parameters.AddWithValue("@fechaSolicitada", fechaSolicitada);
+                    cmd.Parameters.AddWithValue("@motivoSolicitud", motivoSolicitud);
+
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+
+            return RedirectToAction("HistorialHorasJefe");
+        }
+
+        //Metodo para leer las solicitudes de horas extra que se han realizado al empleado que inicia sesion.
+        private List<HistorialHoras> ObtenerHistorialHorasEmpSolicitadas()
+        {
+            int idEmpleado = Convert.ToInt32(Session["idEmpleado"]); // Obtener el idEmpleado de la sesión
+
+            List<HistorialHoras> solicitudes = new List<HistorialHoras>();
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                using (SqlCommand cmd = new SqlCommand("sp_LeerHistorialHorasEmpSolicitadas", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@idEmpleado", idEmpleado); // Añadir parámetro para idEmpleado
+
+                    conn.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            string estadoSolicitudHoras = reader["estadoSolicitudHoras"] == DBNull.Value ? "Pendiente" :
+                                (Convert.ToBoolean(reader["estadoSolicitudHoras"]) ? "Aprobada" : "Rechazada");
+
+                            HistorialHoras solicitud = new HistorialHoras
+                            {
+                                idSolicitud = Convert.ToInt32(reader["idSolicitud"]),
+                                Empleado = reader["Empleado"].ToString(),
+                                Actividad = reader["Actividad"].ToString(),
+                                cantidadHoras = Convert.ToDecimal(reader["cantidadHoras"]),
+                                Estado = estadoSolicitudHoras,
+                                fechaSolicitada = Convert.ToDateTime(reader["fechaSolicitada"]),
+                                fechaSolicitud = Convert.ToDateTime(reader["fechaSolicitud"]),
+                                motivoSolicitud = reader["motivoSolicitud"].ToString()
+                            };
+
+                            solicitudes.Add(solicitud);
+                        }
+                    }
+                }
+            }
+
+            return solicitudes;
+        }
+
+        // Acción para mostrar el historial de horas extras
+        public ActionResult HistorialHorasEmp()
+        {
+            List<HistorialHoras> solicitudes = ObtenerHistorialHorasEmpSolicitadas();
+            ViewBag.Empleados = ObtenerEmpleados();
+            ViewBag.Actividades = ObtenerActividades();
+            return View(solicitudes);
+        }
+
+        // Acción para aprobar o rechazar una solicitud de horas extra
+        [HttpPost]
+        public ActionResult AprobarRechazarSolicitudHoras(int idSolicitud, bool aprobar)
+        {
+            string mensaje = string.Empty;
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                using (SqlCommand cmd = new SqlCommand("sp_AprobarRechazarHoras", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@idSolicitud", idSolicitud);
+                    cmd.Parameters.AddWithValue("@estadoSolicitudHoras", aprobar); // Aprobado/Rechazado
+                    cmd.Parameters.Add("@mensaje", SqlDbType.NVarChar, 250).Direction = ParameterDirection.Output;
+
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+
+                    mensaje = cmd.Parameters["@mensaje"].Value.ToString();
+                }
+            }
+
+            TempData["Mensaje"] = mensaje;
+            TempData["TipoMensaje"] = "success"; // Siempre éxito
+
+            return RedirectToAction("HistorialHorasEmp");
+        }
+
+        public ActionResult EdicionComponentes()
+        {
+            return View();
+        }
+
+
         public ActionResult shared()
         {
             return View();
@@ -980,7 +1123,6 @@ namespace ControlSoft.Controllers
             return View();
         }
 
-        
         public ActionResult DashboardInicioJef()
         {
             return View();
@@ -1002,242 +1144,238 @@ namespace ControlSoft.Controllers
             return View();
         }
 
-        
-
-        public ActionResult ladingPage()
+        public ActionResult ladingpage()
         {
-            return View("ladingpage");
+            return View();
         }
-
-
 
         /*public ActionResult registroEmpleado()
+{
+    RegistroEmpleadoViewModel viewModel = new RegistroEmpleadoViewModel
+    {
+        Puestos = new List<Puesto>(),
+        Roles = new List<Rol>()
+    };
+
+    try
+    {
+        using (SqlConnection conn = new SqlConnection(connectionString))
         {
-            RegistroEmpleadoViewModel viewModel = new RegistroEmpleadoViewModel
-            {
-                Puestos = new List<Puesto>(),
-                Roles = new List<Rol>()
-            };
+            conn.Open();
 
-            try
+            // Cargar puestos
+            using (SqlCommand cmd = new SqlCommand("sp_LeerTodosPuestos", conn))
             {
-                using (SqlConnection conn = new SqlConnection(connectionString))
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
                 {
-                    conn.Open();
-
-                    // Cargar puestos
-                    using (SqlCommand cmd = new SqlCommand("sp_LeerTodosPuestos", conn))
+                    while (reader.Read())
                     {
-                        cmd.CommandType = CommandType.StoredProcedure;
-
-                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        Puesto puesto = new Puesto
                         {
-                            while (reader.Read())
-                            {
-                                Puesto puesto = new Puesto
-                                {
-                                    idPuesto = Convert.ToInt32(reader["idPuesto"]),
-                                    nombrePuesto = reader["nombrePuesto"].ToString()
-                                };
+                            idPuesto = Convert.ToInt32(reader["idPuesto"]),
+                            nombrePuesto = reader["nombrePuesto"].ToString()
+                        };
 
-                                viewModel.Puestos.Add(puesto);
-                            }
-                        }
-                    }
-
-                    // Cargar roles
-                    using (SqlCommand cmd = new SqlCommand("sp_LeerTodosRoles", conn))
-                    {
-                        cmd.CommandType = CommandType.StoredProcedure;
-
-                        using (SqlDataReader reader = cmd.ExecuteReader())
-                        {
-                            while (reader.Read())
-                            {
-                                Rol rol = new Rol
-                                {
-                                    idRol = Convert.ToInt32(reader["idRol"]),
-                                    nombreRol = reader["nombreRol"].ToString()
-                                };
-
-                                viewModel.Roles.Add(rol);
-                            }
-                        }
+                        viewModel.Puestos.Add(puesto);
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine("Error al cargar datos: " + ex.Message);
-                // Considerar un manejo de errores más robusto, como registrar en un archivo o base de datos
-            }
 
-            return View(viewModel); // Pasar el ViewModel a la vista
+            // Cargar roles
+            using (SqlCommand cmd = new SqlCommand("sp_LeerTodosRoles", conn))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        Rol rol = new Rol
+                        {
+                            idRol = Convert.ToInt32(reader["idRol"]),
+                            nombreRol = reader["nombreRol"].ToString()
+                        };
+
+                        viewModel.Roles.Add(rol);
+                    }
+                }
+            }
         }
-        [HttpPost]
-        public ActionResult registroEmpleado(RegistroEmpleadoViewModel model)
+    }
+    catch (Exception ex)
+    {
+        System.Diagnostics.Debug.WriteLine("Error al cargar datos: " + ex.Message);
+        // Considerar un manejo de errores más robusto, como registrar en un archivo o base de datos
+    }
+
+    return View(viewModel); // Pasar el ViewModel a la vista
+}
+[HttpPost]
+public ActionResult registroEmpleado(RegistroEmpleadoViewModel model)
+{
+    if (ModelState.IsValid)
+    {
+        try
         {
-            if (ModelState.IsValid)
+            // Registrar los datos que se enviarán
+            Debug.WriteLine("idEmpleado: " + model.idEmpleado);
+            Debug.WriteLine("NombreCompleto: " + model.NombreCompleto);
+            Debug.WriteLine("ApellidosCompletos: " + model.ApellidosCompletos);
+            Debug.WriteLine("CorreoElectronico: " + model.CorreoElectronico);
+            Debug.WriteLine("Telefono: " + model.Telefono);
+            Debug.WriteLine("nombrePuesto: " + model.nombrePuesto);
+            Debug.WriteLine("FechaIngreso: " + model.FechaIngreso);
+            Debug.WriteLine("nombreRol: " + model.nombreRol);
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
             {
-                try
+                conn.Open();
+
+                // Insertar el empleado
+                using (SqlCommand cmd = new SqlCommand("sp_InsertarEmpleado", conn))
                 {
-                    // Registrar los datos que se enviarán
-                    Debug.WriteLine("idEmpleado: " + model.idEmpleado);
-                    Debug.WriteLine("NombreCompleto: " + model.NombreCompleto);
-                    Debug.WriteLine("ApellidosCompletos: " + model.ApellidosCompletos);
-                    Debug.WriteLine("CorreoElectronico: " + model.CorreoElectronico);
-                    Debug.WriteLine("Telefono: " + model.Telefono);
-                    Debug.WriteLine("nombrePuesto: " + model.nombrePuesto);
-                    Debug.WriteLine("FechaIngreso: " + model.FechaIngreso);
-                    Debug.WriteLine("nombreRol: " + model.nombreRol);
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@idEmpleado", model.idEmpleado);
+                    cmd.Parameters.AddWithValue("@nombre", model.NombreCompleto);
+                    cmd.Parameters.AddWithValue("@apellidos", model.ApellidosCompletos);
+                    cmd.Parameters.AddWithValue("@correo", model.CorreoElectronico);
+                    cmd.Parameters.AddWithValue("@telefono", model.Telefono);
+                    cmd.Parameters.AddWithValue("@nombrePuesto", model.nombrePuesto);
+                    cmd.Parameters.AddWithValue("@fechaIngreso", model.FechaIngreso);
+                    cmd.Parameters.AddWithValue("@nombreRol", model.nombreRol);
 
-                    using (SqlConnection conn = new SqlConnection(connectionString))
+                    SqlParameter mensajeParam = new SqlParameter("@Mensaje", SqlDbType.NVarChar, 1000)
                     {
-                        conn.Open();
+                        Direction = ParameterDirection.Output
+                    };
+                    cmd.Parameters.Add(mensajeParam);
 
-                        // Insertar el empleado
-                        using (SqlCommand cmd = new SqlCommand("sp_InsertarEmpleado", conn))
-                        {
-                            cmd.CommandType = CommandType.StoredProcedure;
-                            cmd.Parameters.AddWithValue("@idEmpleado", model.idEmpleado);
-                            cmd.Parameters.AddWithValue("@nombre", model.NombreCompleto);
-                            cmd.Parameters.AddWithValue("@apellidos", model.ApellidosCompletos);
-                            cmd.Parameters.AddWithValue("@correo", model.CorreoElectronico);
-                            cmd.Parameters.AddWithValue("@telefono", model.Telefono);
-                            cmd.Parameters.AddWithValue("@nombrePuesto", model.nombrePuesto);
-                            cmd.Parameters.AddWithValue("@fechaIngreso", model.FechaIngreso);
-                            cmd.Parameters.AddWithValue("@nombreRol", model.nombreRol);
+                    cmd.ExecuteNonQuery();
 
-                            SqlParameter mensajeParam = new SqlParameter("@Mensaje", SqlDbType.NVarChar, 1000)
-                            {
-                                Direction = ParameterDirection.Output
-                            };
-                            cmd.Parameters.Add(mensajeParam);
+                    string mensaje = mensajeParam.Value.ToString();
+                    Debug.WriteLine("Mensaje del procedimiento almacenado: " + mensaje);
 
-                            cmd.ExecuteNonQuery();
-
-                            string mensaje = mensajeParam.Value.ToString();
-                            Debug.WriteLine("Mensaje del procedimiento almacenado: " + mensaje);
-
-                            if (!mensaje.Contains("exitosamente"))
-                            {
-                                ViewBag.Mensaje = mensaje;
-                                ViewBag.AlertType = "danger"; // Tipo de alerta para mensajes de error
-                                return View("registroEmpleado", model);
-                            }
-
-                            ViewBag.Mensaje = mensaje;
-                            ViewBag.AlertType = "success"; // Tipo de alerta para mensajes de éxito
-                        }
-
-                        // Buscar las credenciales del usuario después de insertar el empleado
-                        Debug.WriteLine("Buscando credenciales del usuario...");
-                        string queryCredenciales = "SELECT usuario, contraseña FROM Credenciales WHERE idEmp = @idEmp";
-                        SqlCommand cmdCredenciales = new SqlCommand(queryCredenciales, conn);
-                        cmdCredenciales.Parameters.AddWithValue("@idEmp", model.idEmpleado);
-
-                        string usuario = null;
-                        string contrasena = null;
-
-                        using (SqlDataReader reader = cmdCredenciales.ExecuteReader())
-                        {
-                            if (reader.Read())
-                            {
-                                usuario = reader["usuario"].ToString();
-                                contrasena = reader["contraseña"].ToString();
-                            }
-                        }
-
-                        Debug.WriteLine("Usuario: " + usuario);
-                        Debug.WriteLine("Contraseña: " + contrasena);
-
-                        if (usuario != null && contrasena != null)
-                        {
-                            // Enviar correo electrónico con las credenciales al correo del usuario
-                            EnviarCorreo(model.CorreoElectronico, usuario, contrasena);
-                        }
-                        else
-                        {
-                            ViewBag.Mensaje = "Empleado registrado, pero no se encontraron credenciales para la cédula ingresada.";
-                            ViewBag.AlertType = "danger"; // Tipo de alerta para mensajes de error
-                        }
-
-                        conn.Close();
+                    if (!mensaje.Contains("exitosamente"))
+                    {
+                        ViewBag.Mensaje = mensaje;
+                        ViewBag.AlertType = "danger"; // Tipo de alerta para mensajes de error
+                        return View("registroEmpleado", model);
                     }
 
-                    return View("registroEmpleado", model);
+                    ViewBag.Mensaje = mensaje;
+                    ViewBag.AlertType = "success"; // Tipo de alerta para mensajes de éxito
                 }
-                catch (Exception ex)
-                {
-                    // Registrar el mensaje de la excepción y la traza de pila
-                    Debug.WriteLine("Error al registrar empleado: " + ex.Message);
-                    Debug.WriteLine("Stack Trace: " + ex.StackTrace);
 
-                    ViewBag.Mensaje = "Error al registrar empleado: " + ex.Message;
+                // Buscar las credenciales del usuario después de insertar el empleado
+                Debug.WriteLine("Buscando credenciales del usuario...");
+                string queryCredenciales = "SELECT usuario, contraseña FROM Credenciales WHERE idEmp = @idEmp";
+                SqlCommand cmdCredenciales = new SqlCommand(queryCredenciales, conn);
+                cmdCredenciales.Parameters.AddWithValue("@idEmp", model.idEmpleado);
+
+                string usuario = null;
+                string contrasena = null;
+
+                using (SqlDataReader reader = cmdCredenciales.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        usuario = reader["usuario"].ToString();
+                        contrasena = reader["contraseña"].ToString();
+                    }
+                }
+
+                Debug.WriteLine("Usuario: " + usuario);
+                Debug.WriteLine("Contraseña: " + contrasena);
+
+                if (usuario != null && contrasena != null)
+                {
+                    // Enviar correo electrónico con las credenciales al correo del usuario
+                    EnviarCorreo(model.CorreoElectronico, usuario, contrasena);
+                }
+                else
+                {
+                    ViewBag.Mensaje = "Empleado registrado, pero no se encontraron credenciales para la cédula ingresada.";
                     ViewBag.AlertType = "danger"; // Tipo de alerta para mensajes de error
                 }
+
+                conn.Close();
             }
 
             return View("registroEmpleado", model);
         }
-
-        private void EnviarCorreo(string correoDestino, string usuario, string contrasena)
+        catch (Exception ex)
         {
-            try
-            {
-                Debug.WriteLine("Iniciando el envío de correo...");
-                Debug.WriteLine("Correo destino: " + correoDestino);
-                Debug.WriteLine("Usuario: " + usuario);
-                Debug.WriteLine("Contraseña: " + contrasena);
+            // Registrar el mensaje de la excepción y la traza de pila
+            Debug.WriteLine("Error al registrar empleado: " + ex.Message);
+            Debug.WriteLine("Stack Trace: " + ex.StackTrace);
 
-                var fromAddress = new System.Net.Mail.MailAddress("kreuzdev@gmail.com", "Equipo ControlSoftCR");
-                var toAddress = new System.Net.Mail.MailAddress(correoDestino);
-                const string fromPassword = "kgqr aeqr rosm eydn"; // Asegúrate de que esta contraseña es correcta
-                const string subject = "Credenciales de Acceso";
-
-                string body = $@"
-            <html>
-            <body>
-                <h2>Hola,</h2>
-                <p>Tus credenciales de acceso son:</p>
-                <p><strong>Usuario:</strong> {usuario}</p>
-                <p><strong>Contraseña:</strong> {contrasena}</p>
-                <br>
-                <p>Saludos,</p>
-                <p>El equipo de ControlSoftCr</p>
-            </body>
-            </html>";
-
-                var smtp = new SmtpClient
-                {
-                    Host = "smtp.gmail.com",
-                    Port = 587,
-                    EnableSsl = true,
-                    DeliveryMethod = SmtpDeliveryMethod.Network,
-                    UseDefaultCredentials = false,
-                    Credentials = new NetworkCredential(fromAddress.Address, fromPassword)
-                };
-
-                using (var message = new MailMessage(fromAddress, toAddress)
-                {
-                    Subject = subject,
-                    Body = body,
-                    IsBodyHtml = true // Esto indica que el cuerpo del mensaje es HTML
-                })
-                {
-                    smtp.Send(message);
-                }
-
-                Debug.WriteLine("Correo enviado exitosamente.");
-            }
-            catch (Exception ex)
-            {
-                // Registrar el mensaje de la excepción y la traza de pila
-                Debug.WriteLine("Error al enviar correo: " + ex.Message);
-                Debug.WriteLine("Stack Trace: " + ex.StackTrace);
-            }
+            ViewBag.Mensaje = "Error al registrar empleado: " + ex.Message;
+            ViewBag.AlertType = "danger"; // Tipo de alerta para mensajes de error
         }
-        */
+    }
+
+    return View("registroEmpleado", model);
+}
+
+private void EnviarCorreo(string correoDestino, string usuario, string contrasena)
+{
+    try
+    {
+        Debug.WriteLine("Iniciando el envío de correo...");
+        Debug.WriteLine("Correo destino: " + correoDestino);
+        Debug.WriteLine("Usuario: " + usuario);
+        Debug.WriteLine("Contraseña: " + contrasena);
+
+        var fromAddress = new System.Net.Mail.MailAddress("kreuzdev@gmail.com", "Equipo ControlSoftCR");
+        var toAddress = new System.Net.Mail.MailAddress(correoDestino);
+        const string fromPassword = "kgqr aeqr rosm eydn"; // Asegúrate de que esta contraseña es correcta
+        const string subject = "Credenciales de Acceso";
+
+        string body = $@"
+    <html>
+    <body>
+        <h2>Hola,</h2>
+        <p>Tus credenciales de acceso son:</p>
+        <p><strong>Usuario:</strong> {usuario}</p>
+        <p><strong>Contraseña:</strong> {contrasena}</p>
+        <br>
+        <p>Saludos,</p>
+        <p>El equipo de ControlSoftCr</p>
+    </body>
+    </html>";
+
+        var smtp = new SmtpClient
+        {
+            Host = "smtp.gmail.com",
+            Port = 587,
+            EnableSsl = true,
+            DeliveryMethod = SmtpDeliveryMethod.Network,
+            UseDefaultCredentials = false,
+            Credentials = new NetworkCredential(fromAddress.Address, fromPassword)
+        };
+
+        using (var message = new MailMessage(fromAddress, toAddress)
+        {
+            Subject = subject,
+            Body = body,
+            IsBodyHtml = true // Esto indica que el cuerpo del mensaje es HTML
+        })
+        {
+            smtp.Send(message);
+        }
+
+        Debug.WriteLine("Correo enviado exitosamente.");
+    }
+    catch (Exception ex)
+    {
+        // Registrar el mensaje de la excepción y la traza de pila
+        Debug.WriteLine("Error al enviar correo: " + ex.Message);
+        Debug.WriteLine("Stack Trace: " + ex.StackTrace);
+    }
+}
+*/
 
 
         public ActionResult registroEmpleado()
@@ -1607,9 +1745,9 @@ namespace ControlSoft.Controllers
 
             return View(usuarios);
         }
-        
-        
-        
+
+
+
         public JsonResult ObtenerTurnosTrabajo()
         {
             List<TurnoTrabajo> turnos = new List<TurnoTrabajo>();
@@ -2046,7 +2184,7 @@ namespace ControlSoft.Controllers
             return View(empleado);
         }
         [HttpPost]
-        
+
         public ActionResult ModificarContraseña(ActualizarContraseñaViewModel model)
         {
             string mensaje;
@@ -2302,7 +2440,7 @@ namespace ControlSoft.Controllers
         }
 
 
-        
+
         [HttpPost]
         public ActionResult ActualizarEmpleado(GEmpleadoViewModel model)
         {
@@ -2404,8 +2542,8 @@ namespace ControlSoft.Controllers
         }
 
 
+
+
     }
-
-
 
 }

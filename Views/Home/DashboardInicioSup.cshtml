@@ -1,4 +1,4 @@
-﻿@{
+﻿﻿@{
     ViewBag.Title = "DashboardInicioSup";
     Layout = null;
 
@@ -51,7 +51,7 @@
                             <a class="nav-link" href="#">Planes</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Contacto</a>
+                            <a class="nav-link" href="@Url.Action("login", "Home")">Salir</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="#">
@@ -81,6 +81,7 @@
                             </div>
                         </div>
 
+
                         <div class="card">
                             <div class="card-buttons">
                                 <a href="@Url.Action("horarios", "Home")" class="btn">
@@ -94,7 +95,18 @@
 
                         <div class="card">
                             <div class="card-buttons">
-                                <a href="#" class="btn">
+                                <a href="@Url.Action("HistorialHorasJefe", "Home")" class="btn">
+                                    <img src="~/Content/iconos/horasExtra.png" alt="Icono 1">
+                                </a>
+                            </div>
+                            <div class="card-content">
+                                <h3>Solicitud Horas extra</h3>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-buttons">
+                                <a href="@Url.Action("BandejaInconsistenciasJefe", "Home")" class="btn">
                                     <img src="~/Content/iconos/inconsistencias.png" alt="Icono 3">
                                 </a>
                             </div>
@@ -114,29 +126,7 @@
                             </div>
                         </div>
 
-                        <div class="card">
-                            <div class="card-buttons">
-                                <a href="#" class="btn">
-                                    <img src="~/Content/iconos/incapacidades.png" alt="Icono 5">
-                                </a>
-                            </div>
-                            <div class="card-content">
-                                <h3>Incapacidades</h3>
-                            </div>
-                        </div>
-
-                        <div class="card">
-                            <div class="card-buttons">
-                                <a href="#" class="btn">
-                                    <img src="~/Content/iconos/solicitudes.png" alt="Icono 13">
-                                </a>
-                            </div>
-                            <div class="card-content">
-                                <h3>Solicitudes</h3>
-                            </div>
-                        </div>
-
-
+                        
 
                         <div class="card">
                             <div class="card-buttons">
@@ -160,15 +150,36 @@
                             </div>
                         </div>
 
+                        <div class="card">
+                            <div class="card-buttons">
+                                <a href="@Url.Action("EdicionComponentes", "Home")" class="btn">
+                                    <img src="~/Content/iconos/roles.png" alt="Icono 9">
+                                </a>
+                            </div>
+                            <div class="card-content">
+                                <h3>Edicion de componentes</h3>
+                            </div>
+                        </div>
 
                         <div class="card">
                             <div class="card-buttons">
-                                <a href="#" class="btn">
+                                <a href="@Url.Action("BandejaActividadesJefe", "Home")" class="btn">
                                     <img src="~/Content/iconos/actividades.png" alt="Icono 10">
                                 </a>
                             </div>
                             <div class="card-content">
-                                <h3>Actividades</h3>
+                                <h3>Bandeja Actividades</h3>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-buttons">
+                                <a href="@Url.Action("MonitoreoRendimientoJefe", "Home")" class="btn">
+                                    <img src="~/Content/iconos/indicadores.png" alt="Icono 14">
+                                </a>
+                            </div>
+                            <div class="card-content">
+                                <h3>Monitoreo Rendimiento</h3>
                             </div>
                         </div>
 
@@ -230,7 +241,14 @@
                                 <h3>Gestion Empleados</h3>
                             </div>
                         </div>
-                    </div>
+                   
+
+
+
+
+
+
+                </div>
 
                 </div>
 
